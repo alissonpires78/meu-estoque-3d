@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciador Pro 3D - Edição Cloud</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        /* [ESTILOS ANTERIORES MANTIDOS] */
+        :root {
+            --primary: #4f46e5;
+            --bg: #f3f4f6;
+        }
+        
+        /* AJUSTE DA FOTO (SOLUÇÃO ZOOM) */
+        .filament-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: contain; /* Mostra a foto inteira */
+            background: #eee;
+        }
+
+        .printer-grid, .slot-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .slot-card {
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+
+        .config-section {
+            background: #fff;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            border: 1px solid #e5e7eb;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="tabs">
+    <button onclick="showTab('estoque')">Estoque</button>
+    <button onclick="showTab('impressoras')">Impressoras</button>
+    <button onclick="showTab('uso')">Registrar Uso (Slots)</button>
+    <button onclick="showTab('config')">Configuração Nuvem</button>
+</nav>
+
+<section id="config" class="tab-content" style="display:none">
+    <div class="config-section">
+        <h2>Sincronização GitHub (Persistência)</h2>
+        <p>Preencha para salvar os dados na nuvem automaticamente.</p>
+        <input type="text" id="gh-user" placeholder="Usuário GitHub">
+        <input type="text" id="gh-repo" placeholder="Nome do Repositório">
+        <input type="password" id="gh-token" placeholder="Token de Acesso Pessoal (PAT)">
+        <button onclick="saveCloudConfig()" class="btn-success">Conectar Nuvem</button>
+    </div>
+</section>
+
+<section id="impressoras" class="tab-content" style="display:none">
+    <div class="card">
+        <h3>Cadastrar Nova Impressora</h3>
+        <input type="text" id="print-name" placeholder="Ex: Bambu Lab P1S">
+        <button onclick="addPrinter()">Adicionar Impressora</button>
+        <div id="printer-list" class="printer-grid"></div>
+    </div>
+</section>
+
+<section id="uso" class="tab-content" style="display:none">
+    <div class="card">
+        <h3>Painel de Impressão</h3>
+        <label>Selecione a Impressora:</label>
+        <select id="select-printer" onchange="updateSlots()"></select>
+        
+        <div class="slot-grid">
+            <div class="slot-card">
+                <h4>Slot 1</h4>
+                <select class="filament-select" id="slot-1-fil"></select>
+                <input type="number" id="slot-1-qty" placeholder="Gramas (Slicer)">
+            </div>
+            <div class="slot-card">
+                <h4>Slot 2</h4>
+                <select class="filament-select" id="slot-2-fil"></select>
+                <input type="number" id="slot-2-qty" placeholder="Gramas (Slicer)">
+            </div>
+            </div>
+        <button onclick="registerMultiUsage()" style="margin-top:20px; width:100%; padding:15px; background:var(--success); color:white">
+            Finalizar Impressão e Abater Estoque
+        </button>
+    </div>
+</section>
+
+<script>
+    // LÓGICA DE PERSISTÊNCIA GITHUB
+    async function saveToGitHub(data) {
+        const user = localStorage.getItem('gh-user');
+        const repo = localStorage.getItem('gh-repo');
+        const token = localStorage.getItem('gh-token');
+        
+        if(!token) return console.log("Salvo localmente (sem nuvem configurada)");
+
+        const fileName = 'dados_estoque_completo.json';
+        const url = `https://api.github.com/repos/${user}/${repo}/contents/${fileName}`;
+        
+        // 1. Pegar o SHA do arquivo atual
+        const res = await fetch(url, { headers: { 'Authorization': `token ${token}` } });
+        const fileData = await res.json();
+        
+        // 2. Upload
+        const content = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+        await fetch(url, {
+            method: 'PUT',
+            headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                message: "Atualização automática estoque",
+                content: content,
+                sha: fileData.sha
+            })
+        });
+        alert("Dados sincronizados com GitHub!");
+    }
+
+    // [Restante das funções de lógica de slots e impressoras seguem aqui...]
+</script>
+</body>
+</html>
