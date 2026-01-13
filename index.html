@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciador Profissional 3D - Cloud</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        /* RECUPERANDO O VISUAL ORIGINAL */
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --danger: #ff6b6b;
+            --success: #51cf66;
+            --warning: #fbbf24;
+            --dark: #1f2937;
+            --light: #f9fafb;
+            --border: #e5e7eb;
+            --gray: #6b7280;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            min-height: 100vh;
+            color: var(--dark);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        /* NAVEGAÇÃO RESPONSIVA */
+        .tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 25px;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 10px;
+        }
+
+        .tab-btn {
+            padding: 12px 20px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--gray);
+            border-radius: 8px;
+            transition: 0.3s;
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* AJUSTE DA FOTO (SEM ZOOM) */
+        .filament-img-container {
+            width: 100%;
+            height: 180px;
+            background: #eee;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .filament-img-container img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain; /* Foto inteira aparece aqui */
+        }
+
+        /* GRID DE CARDS */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 15px;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        /* ESTILO DOS 4 SLOTS */
+        .slots-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .slot-card {
+            background: var(--light);
+            padding: 15px;
+            border-radius: 12px;
+            border-left: 5px solid var(--primary);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+        }
+
+        .btn-action {
+            background: var(--success);
+            color: white;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            width: 100%;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            .container { border-radius: 10px; }
+            .tab-btn { flex: 1 1 40%; text-align: center; font-size: 14px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header style="text-align: center; margin-bottom: 20px;">
+        <h1 style="color: var(--secondary)">🚀 Meu Estoque 3D Pro</h1>
+    </header>
+
+    <nav class="tabs">
+        <button class="tab-btn active" onclick="showTab('estoque')">📦 Estoque</button>
+        <button class="tab-btn" onclick="showTab('uso')">⚙️ Registrar Uso</button>
+        <button class="tab-btn" onclick="showTab('impressoras')">🖨️ Impressoras</button>
+        <button class="tab-btn" onclick="showTab('config')">☁️ Nuvem/Sinc</button>
+    </nav>
+
+    <section id="estoque" class="tab-content">
+        <div class="grid" id="filament-grid">
+            </div>
+    </section>
+
+    <section id="uso" class="tab-content" style="display:none">
+        <div class="card">
+            <h2>Registrar Impressão</h2>
+            <label>Qual impressora está usando?</label>
+            <select id="active-printer"></select>
+
+            <div class="slots-container">
+                <div class="slot-card">
+                    <h4>Slot 1</h4>
+                    <select class="filament-select" id="s1-fil"></select>
+                    <input type="number" id="s1-qty" placeholder="Peso usado (g)">
+                </div>
+                <div class="slot-card">
+                    <h4>Slot 2</h4>
+                    <select class="filament-select" id="s2-fil"></select>
+                    <input type="number" id="s2-qty" placeholder="Peso usado (g)">
+                </div>
+                <div class="slot-card">
+                    <h4>Slot 3</h4>
+                    <select class="filament-select" id="s3-fil"></select>
+                    <input type="number" id="s3-qty" placeholder="Peso usado (g)">
+                </div>
+                <div class="slot-card">
+                    <h4>Slot 4</h4>
+                    <select class="filament-select" id="s4-fil"></select>
+                    <input type="number" id="s4-qty" placeholder="Peso usado (g)">
+                </div>
+            </div>
+            <button class="btn-action" onclick="processPrint()">Confirmar e Abater Estoque</button>
+        </div>
+    </section>
+
+    <section id="impressoras" class="tab-content" style="display:none">
+        <div class="card">
+            <h2>Minhas Máquinas</h2>
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="new-printer-name" placeholder="Nome da Impressora (ex: Bambu P1S)">
+                <button onclick="addPrinter()" style="padding: 10px; background: var(--primary); color: white; border: none; border-radius: 5px;">+</button>
+            </div>
+            <ul id="printer-list" style="margin-top: 20px; list-style: none;"></ul>
+        </div>
+    </section>
+
+    <section id="config" class="tab-content" style="display:none">
+        <div class="card">
+            <h2>Sincronização com GitHub</h2>
+            <p>Configure para acessar do PC e Celular simultaneamente.</p>
+            <input type="text" id="gh-user" placeholder="Usuário do GitHub">
+            <input type="text" id="gh-repo" placeholder="Nome do repositório">
+            <input type="password" id="gh-token" placeholder="Token PAT">
+            <button onclick="saveCloudSettings()" class="btn-action" style="background: var(--dark)">Conectar e Salvar</button>
+        </div>
+    </section>
+</div>
+
+<script>
+    // ESTADO DA APLICAÇÃO
+    let state = {
+        filaments: [],
+        printers: [],
+        config: { user: '', repo: '', token: '' }
+    };
+
+    // INICIALIZAÇÃO
+    function init() {
+        const localData = localStorage.getItem('estoque3d_data');
+        if(localData) {
+            state = JSON.parse(localData);
+        }
+        render();
+    }
+
+    function showTab(tabName) {
+        document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(tabName).style.display = 'block';
+        event.currentTarget.classList.add('active');
+    }
+
+    // RENDERIZAÇÃO DO ESTOQUE
+    function render() {
+        const grid = document.getElementById('filament-grid');
+        grid.innerHTML = state.filaments.map(f => `
+            <div class="card">
+                <div class="filament-img-container">
+                    <img src="${f.fotoBlob || 'https://via.placeholder.com/150'}" alt="foto">
+                </div>
+                <h3 style="color:var(--secondary)">${f.cor}</h3>
+                <p><strong>Marca:</strong> ${f.marca}</p>
+                <p><strong>Peso:</strong> ${f.gramas}g</p>
+                <div style="background: #eee; height: 10px; border-radius: 5px; margin-top: 10px;">
+                    <div style="background: var(--success); height: 100%; width: ${(f.gramas/1000)*100}%; border-radius: 5px;"></div>
+                </div>
+            </div>
+        `).join('');
+
+        // Atualiza selects de filamentos nos slots
+        const selects = document.querySelectorAll('.filament-select');
+        const options = '<option value="">Vazio</option>' + state.filaments.map(f => `<option value="${f.id}">${f.cor} (${f.marca})</option>`).join('');
+        selects.forEach(s => s.innerHTML = options);
+
+        // Atualiza lista de impressoras
+        const pSelect = document.getElementById('active-printer');
+        pSelect.innerHTML = state.printers.map(p => `<option value="${p}">${p}</option>`).join('');
+        
+        const pList = document.getElementById('printer-list');
+        pList.innerHTML = state.printers.map(p => `<li style="padding: 10px; border-bottom: 1px solid #eee;">🖨️ ${p}</li>`).join('');
+    }
+
+    function addPrinter() {
+        const name = document.getElementById('new-printer-name').value;
+        if(name) {
+            state.printers.push(name);
+            document.getElementById('new-printer-name').value = '';
+            saveData();
+        }
+    }
+
+    function processPrint() {
+        for(let i=1; i<=4; i++) {
+            const fid = document.getElementById(`s${i}-fil`).value;
+            const qty = document.getElementById(`s${i}-qty`).value;
+            if(fid && qty) {
+                const fIndex = state.filaments.findIndex(f => f.id == fid);
+                if(fIndex > -1) {
+                    state.filaments[fIndex].gramas -= parseFloat(qty);
+                }
+            }
+        }
+        alert("Consumo registrado com sucesso!");
+        saveData();
+    }
+
+    function saveData() {
+        localStorage.setItem('estoque3d_data', JSON.stringify(state));
+        render();
+        // Se tiver GitHub configurado, envia pra nuvem
+        if(state.config.token) syncToGitHub();
+    }
+
+    // GITHUB SYNC
+    async function syncToGitHub() {
+        const { user, repo, token } = state.config;
+        const url = `https://api.github.com/repos/${user}/${repo}/contents/dados_estoque_completo.json`;
+        
+        try {
+            const res = await fetch(url, { headers: { 'Authorization': `token ${token}` } });
+            const file = await res.json();
+            const content = btoa(unescape(encodeURIComponent(JSON.stringify(state.filaments))));
+
+            await fetch(url, {
+                method: 'PUT',
+                headers: { 'Authorization': `token ${token}` },
+                body: JSON.stringify({
+                    message: "Sync 3D Stock",
+                    content: content,
+                    sha: file.sha
+                })
+            });
+            console.log("Nuvem atualizada!");
+        } catch (e) {
+            console.error("Erro no sync", e);
+        }
+    }
+
+    function saveCloudSettings() {
+        state.config.user = document.getElementById('gh-user').value;
+        state.config.repo = document.getElementById('gh-repo').value;
+        state.config.token = document.getElementById('gh-token').value;
+        saveData();
+        alert("Configurações de nuvem salvas!");
+    }
+
+    init();
+</script>
+</body>
+</html>
