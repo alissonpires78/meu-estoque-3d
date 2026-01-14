@@ -1,0 +1,1710 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciador Profissional de Filamentos 3D</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.1.4/html5-qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --danger: #ff6b6b;
+            --success: #51cf66;
+            --warning: #fbbf24;
+            --dark: #1f2937;
+            --light: #f9fafb;
+            --border: #e5e7eb;
+            --gray: #6b7280;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            min-height: 100vh;
+            padding: 15px;
+            color: var(--dark);
+        }
+
+        .container { max-width: 1800px; margin: 0 auto; }
+
+        header {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        header h1 {
+            font-size: 2em;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 25px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-tab {
+            padding: 10px 20px;
+            border: 2px solid var(--border);
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 0.95em;
+        }
+
+        .nav-tab.active {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .nav-tab:hover { border-color: var(--primary); }
+
+        .tab-content { display: none; animation: fadeIn 0.3s ease; }
+        .tab-content.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--light);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+        .btn-secondary:hover { background: var(--border); }
+
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-danger:hover { background: #ff5252; }
+
+        .btn-success { background: var(--success); color: white; }
+
+        .btn-small { padding: 8px 16px; font-size: 0.85em; }
+
+        .filters {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        input, select, textarea {
+            padding: 10px 15px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.95em;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            border-top: 4px solid var(--primary);
+        }
+
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: var(--primary);
+            margin: 10px 0;
+        }
+
+        .stat-label { color: var(--gray); font-size: 0.85em; }
+
+        .content-grid { display: grid; grid-template-columns: 1fr 350px; gap: 25px; }
+        @media (max-width: 1024px) { .content-grid { grid-template-columns: 1fr; } }
+
+        .filament-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+
+        .filament-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            border-top: 5px solid;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .filament-card:hover { transform: translateY(-8px); box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2); }
+
+        .card-image {
+            width: 100%;
+            height: 200px;
+            object-fit: contain;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gray);
+            border: 1px solid var(--border);
+        }
+
+        .card-header { display: flex; justify-content: space-between; align-items: start; gap: 10px; margin-bottom: 12px; }
+
+        .card-title { font-size: 1.05em; font-weight: bold; color: var(--dark); flex: 1; }
+
+        .badge { padding: 4px 8px; border-radius: 6px; font-size: 0.75em; font-weight: bold; white-space: nowrap; }
+        .badge-em_uso { background: #d3f9d8; color: #2b8a3e; }
+        .badge-lacrado { background: #ffe3e3; color: #c92a2a; }
+        .badge-usado { background: #fff3bf; color: #f59f00; }
+
+        .info-row { display: flex; justify-content: space-between; font-size: 0.9em; margin-bottom: 8px; color: #555; }
+        .info-label { font-weight: 600; color: var(--dark); }
+
+        .location-badge {
+            background: #e0e7ff;
+            color: var(--primary);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin: 8px 0;
+        }
+
+        .stock-bar { width: 100%; height: 8px; background: var(--border); border-radius: 4px; margin: 12px 0; overflow: hidden; }
+        .stock-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary)); transition: width 0.3s ease; }
+
+        .card-actions { display: flex; gap: 8px; margin-top: 15px; flex-wrap: wrap; }
+        .card-actions button { flex: 1; min-width: 70px; padding: 8px; font-size: 0.8em; }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .modal.active { display: flex; }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 700px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-title { font-size: 1.5em; font-weight: bold; margin-bottom: 20px; color: var(--dark); }
+
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.9em; color: var(--dark); }
+
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .form-row .form-group { margin-bottom: 0; }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.95em;
+        }
+
+        .form-group textarea { resize: vertical; min-height: 100px; }
+
+        .auto-calc-box {
+            background: var(--light);
+            border-left: 4px solid var(--success);
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 0.9em;
+            color: var(--gray);
+            margin-bottom: 15px;
+        }
+
+        .modal-footer { display: flex; gap: 10px; margin-top: 25px; justify-content: flex-end; }
+
+        .calculator-form {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 25px;
+        }
+
+        .calculator-result {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .result-value { font-size: 3em; font-weight: bold; margin: 15px 0; }
+        .result-label { font-size: 1.1em; opacity: 0.9; }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--dark);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            z-index: 2000;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(400px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .sidebar { display: flex; flex-direction: column; gap: 20px; }
+        .sidebar-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); }
+        .sidebar-card h3 { margin-bottom: 15px; color: var(--dark); font-size: 1em; border-bottom: 2px solid var(--border); padding-bottom: 10px; }
+
+        .quick-filters { display: flex; flex-direction: column; gap: 8px; }
+        .quick-filter-btn {
+            text-align: left;
+            padding: 10px 15px;
+            background: var(--light);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+        }
+        .quick-filter-btn:hover { background: var(--border); border-color: var(--primary); }
+
+        .empty-state { grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--gray); }
+        .empty-icon { font-size: 4em; margin-bottom: 15px; }
+        .empty-text { font-size: 1.1em; margin-bottom: 10px; }
+
+        .qr-scanner-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 25px;
+        }
+
+        #scanner { width: 100%; max-width: 400px; margin: 0 auto; }
+
+        @media (max-width: 768px) {
+            header { flex-direction: column; text-align: center; }
+            .nav-tabs { flex-direction: column; gap: 8px; }
+            .nav-tab { width: 100%; }
+            .form-row { grid-template-columns: 1fr; }
+            .card-actions { flex-direction: column; }
+            .card-actions button { width: 100%; }
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+    <header>
+        <h1>🎨 Gerenciador Profissional de Filamentos 3D</h1>
+        <button class="btn-primary" onclick="openAddModal()">+ Novo Filamento</button>
+    </header>
+
+    <div class="nav-tabs">
+        <button class="nav-tab active" onclick="switchTab('estoque', this)">📦 Estoque</button>
+        <button class="nav-tab" onclick="switchTab('adicionar-uso', this)">➖ Registrar Uso</button>
+        <button class="nav-tab" onclick="switchTab('qrcode', this)">📱 QR Code</button>
+        <button class="nav-tab" onclick="switchTab('calculadora', this)">💰 Calculadora de Preço</button>
+        <button class="nav-tab" onclick="switchTab('impressoras', this)">🖨️ Impressoras</button>
+        <button class="nav-tab" onclick="switchTab('ferramentas', this)">🛠️ Ferramentas</button>
+    </div>
+
+    <!-- ABA ESTOQUE -->
+    <div id="estoque" class="tab-content active">
+        <div class="filters">
+            <input type="text" id="searchInput" placeholder="Buscar por cor, marca..." onkeyup="filterFilaments()">
+            <select id="colorFilter" onchange="filterFilaments()">
+                <option value="">Todas as cores</option>
+            </select>
+            <select id="statusFilter" onchange="filterFilaments()">
+                <option value="">Todos os status</option>
+                <option value="em_uso">Em Uso</option>
+                <option value="lacrado">Lacrado</option>
+                <option value="usado">Usado</option>
+            </select>
+            <select id="materialFilter" onchange="filterFilaments()">
+                <option value="">Todos os materiais</option>
+                <option value="PLA">PLA</option>
+                <option value="PETG">PETG</option>
+                <option value="ABS">ABS</option>
+                <option value="TPU">TPU</option>
+            </select>
+        </div>
+
+        <div class="stats-grid" id="statsGrid"></div>
+
+        <div class="content-grid">
+            <div class="filament-grid" id="filamentGrid"></div>
+            <div class="sidebar">
+                <div class="sidebar-card">
+                    <h3>Filtros Rápidos</h3>
+                    <div class="quick-filters">
+                        <button class="quick-filter-btn" onclick="filterByStatus('em_uso')">📦 Em Uso</button>
+                        <button class="quick-filter-btn" onclick="filterByStatus('lacrado')">🔒 Lacrado</button>
+                        <button class="quick-filter-btn" onclick="showLowStock()">⚠️ Baixo Estoque</button>
+                        <button class="quick-filter-btn" onclick="exportJSON()">📥 Exportar JSON</button>
+                        <button class="quick-filter-btn" onclick="exportCSV()">📊 Exportar CSV</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ABA REGISTRAR USO -->
+    <div id="adicionar-uso" class="tab-content">
+        <div class="calculator-form">
+            <h2>Registrar Consumo de Filamento</h2>
+            <p style="color: var(--gray); margin-bottom: 20px; font-size: 0.95em;">
+                Selecione a impressora e registre o consumo estimado pelo slicer para cada slot utilizado.
+            </p>
+
+            <div class="form-group">
+                <label>Selecione a Impressora:</label>
+                <select id="printerSelectUso" onchange="updateUsageSlots()" required>
+                    <option value="">-- Selecione uma impressora --</option>
+                </select>
+            </div>
+
+            <div id="usageSlotsContainer"></div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Data da Impressão:</label>
+                    <input type="date" id="dataImpressao" required>
+                </div>
+                <div class="form-group">
+                    <label>Nome da Peça (opcional):</label>
+                    <input type="text" id="nomePeca" placeholder="Ex: Suporte para celular">
+                </div>
+            </div>
+
+            <button class="btn-success" onclick="registrarUsoMultiplo()" style="width: 100%; margin-top: 20px;">
+                ✓ Registrar Uso nos Slots
+            </button>
+        </div>
+
+        <div class="calculator-form">
+            <h3>Histórico Recente de Usos</h3>
+            <div id="usageList" style="max-height: 400px; overflow-y: auto;"></div>
+        </div>
+    </div>
+
+    <!-- ABA QR CODE -->
+    <div id="qrcode" class="tab-content">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px;">
+            <div>
+                <div class="qr-scanner-container">
+                    <h3>🔍 Scanner QR Code</h3>
+                    <p style="color: var(--gray); margin-bottom: 15px; font-size: 0.9em;">Escaneie um código para localizar o filamento</p>
+                    <div id="scanner"></div>
+                    <button class="btn-primary" style="width: 100%; margin-top: 15px;" onclick="startScanning()">Iniciar Scanner</button>
+                    <button class="btn-secondary" style="width: 100%; margin-top: 8px;" onclick="stopScanning()">Parar Scanner</button>
+                    <div id="scanResult" style="margin-top: 15px; padding: 15px; background: var(--light); border-radius: 8px; display: none;"></div>
+                </div>
+            </div>
+
+            <div>
+                <div class="qr-scanner-container">
+                    <h3>📱 Gerar QR Code</h3>
+                    <div class="form-group">
+                        <label>Selecione o Filamento:</label>
+                        <select id="filamentSelectQR" onchange="generateQR()">
+                            <option value="">-- Selecione um filamento --</option>
+                        </select>
+                    </div>
+                    <div id="qrOutput" style="display: none; text-align: center; margin-top: 20px;">
+                        <div id="qrcode-generator"></div>
+                        <button class="btn-primary" style="width: 100%; margin-top: 15px;" onclick="printQRCode()">🖨️ Imprimir Etiqueta</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ABA CALCULADORA -->
+    <div id="calculadora" class="tab-content">
+        <div class="calculator-form">
+            <h2>💰 Calculadora de Precificação</h2>
+            <p style="color: var(--gray); margin-bottom: 20px;">Calcule o preço final de uma peça com base nos custos reais</p>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Custo do Filamento Usado (R$):</label>
+                    <input type="number" id="calcCustoMaterial" placeholder="0.00" step="0.01" onchange="calcularPreco()">
+                </div>
+                <div class="form-group">
+                    <label>Peso de Filamento (g):</label>
+                    <input type="number" id="calcPesoFilamento" placeholder="0" step="0.1" onchange="calcularPreco()">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Tempo de Impressão (horas):</label>
+                    <input type="number" id="calcTempoHoras" placeholder="0" step="0.1" onchange="calcularPreco()">
+                </div>
+                <div class="form-group">
+                    <label>Custo da Energia por hora (R$):</label>
+                    <input type="number" id="calcCustoEnergia" placeholder="0.50" step="0.01" value="0.50" onchange="calcularPreco()">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Custo da Mão de Obra por hora (R$):</label>
+                    <input type="number" id="calcCustoMaoObra" placeholder="50.00" step="0.01" value="50.00" onchange="calcularPreco()">
+                </div>
+                <div class="form-group">
+                    <label>Margem de Lucro (%):</label>
+                    <input type="number" id="calcMargemLucro" placeholder="40" step="1" value="40" onchange="calcularPreco()">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Descrição da Peça:</label>
+                <textarea id="calcDescricao" placeholder="Ex: Miniatura decorativa com 2 cores..."></textarea>
+            </div>
+
+            <div id="calculoResultado" style="display: none;">
+                <div style="background: var(--light); padding: 20px; border-radius: 8px; margin-top: 20px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                        <div>
+                            <p style="color: var(--gray); font-size: 0.9em;">Custo Material</p>
+                            <p style="font-size: 1.5em; font-weight: bold; color: var(--primary);" id="resultado-material">R$ 0,00</p>
+                        </div>
+                        <div>
+                            <p style="color: var(--gray); font-size: 0.9em;">Custo Energia</p>
+                            <p style="font-size: 1.5em; font-weight: bold; color: var(--primary);" id="resultado-energia">R$ 0,00</p>
+                        </div>
+                        <div>
+                            <p style="color: var(--gray); font-size: 0.9em;">Custo M.O.</p>
+                            <p style="font-size: 1.5em; font-weight: bold; color: var(--primary);" id="resultado-mao">R$ 0,00</p>
+                        </div>
+                        <div>
+                            <p style="color: var(--gray); font-size: 0.9em;">Subtotal</p>
+                            <p style="font-size: 1.5em; font-weight: bold; color: var(--primary);" id="resultado-subtotal">R$ 0,00</p>
+                        </div>
+                    </div>
+                    <div class="calculator-result">
+                        <div class="result-label">PREÇO FINAL RECOMENDADO</div>
+                        <div class="result-value" id="resultado-preco">R$ 0,00</div>
+                        <div class="result-label" style="margin-top: 10px;" id="resultado-lucro">Lucro: R$ 0,00</div>
+                    </div>
+                    <button class="btn-primary" style="width: 100%; margin-top: 15px;" onclick="copiarPreco()">📋 Copiar Preço</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ABA IMPRESSORAS -->
+    <div id="impressoras" class="tab-content">
+        <div class="filters">
+            <button class="btn-primary" onclick="openPrinterModal()">+ Nova Impressora</button>
+        </div>
+        <div id="printerGrid" class="filament-grid"></div>
+    </div>
+
+    <!-- ABA FERRAMENTAS -->
+    <div id="ferramentas" class="tab-content">
+        <div class="calculator-form">
+            <h3>Ferramentas e Utilitários</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <button class="btn-primary" onclick="exportJSON()">📥 Exportar Dados (JSON)</button>
+                <button class="btn-primary" onclick="exportCSV()">📊 Exportar Dados (CSV)</button>
+                <button class="btn-secondary" onclick="importData()">📤 Importar Dados</button>
+                <button class="btn-danger" onclick="clearAllData()">🗑️ Limpar Tudo</button>
+            </div>
+            <input type="file" id="importFile" accept=".json" style="display: none;" onchange="handleImport(event)">
+        </div>
+
+        <div class="calculator-form">
+            <h3>Informações Técnicas</h3>
+            <p style="color: var(--gray); line-height: 1.8;">
+                <strong>Fórmula de Cálculo de Comprimento:</strong><br>
+                Comprimento (m) = Peso (g) / (π × (Diâmetro/2)² × Densidade)<br><br>
+
+                <strong>Densidades Padrão:</strong><br>
+                • PLA: 1.24 g/cm³<br>
+                • PETG: 1.27 g/cm³<br>
+                • ABS: 1.04 g/cm³<br>
+                • TPU: 1.22 g/cm³<br>
+                • Nylon: 1.08 g/cm³<br><br>
+
+                <strong>Cálculo de Preço:</strong><br>
+                Preço Final = (Custo Total × Margem) + Custo Total<br>
+                Custo Total = Material + Energia + Mão de Obra
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL ADICIONAR/EDITAR FILAMENTO -->
+<div id="addModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-title" id="modalTitle">Novo Filamento</div>
+        <form onsubmit="saveFilament(event)">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Cor Dominante:</label>
+                    <input type="text" id="corDominante" required>
+                </div>
+                <div class="form-group">
+                    <label>Nome/Modelo:</label>
+                    <input type="text" id="cor" required>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Marca:</label>
+                    <input type="text" id="marca" required>
+                </div>
+                <div class="form-group">
+                    <label>Fornecedor:</label>
+                    <input type="text" id="fornecedor">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Preço Pago (R$):</label>
+                    <input type="number" id="precoPago" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label>Material:</label>
+                    <select id="material" required>
+                        <option value="">Selecione</option>
+                        <option value="PLA">PLA</option>
+                        <option value="PETG">PETG</option>
+                        <option value="ABS">ABS</option>
+                        <option value="TPU">TPU</option>
+                        <option value="Nylon">Nylon</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Diâmetro:</label>
+                    <select id="diametro" required>
+                        <option value="1.75">1,75 MM</option>
+                        <option value="2.85">2,85 MM</option>
+                        <option value="3">3 MM</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Densidade (g/cm³):</label>
+                    <input type="number" id="densidade" step="0.01" required>
+                </div>
+            </div>
+
+            <div class="auto-calc-box">
+                ℹ️ Os campos abaixo são calculados automaticamente. Digite um valor para substituir o cálculo automático.
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Peso de Filamento (g):</label>
+                    <input type="number" id="gramas" placeholder="Auto" step="0.1" onchange="updateMetros()">
+                    <small style="color: var(--gray); margin-top: 5px; display: block;">Subtrair Embalagem = Balança - Embalagem</small>
+                </div>
+                <div class="form-group">
+                    <label>Peso Balança (g):</label>
+                    <input type="number" id="pesoBalanca" step="0.1" required onchange="autoCalcGramas()">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Peso Embalagem (g):</label>
+                    <input type="number" id="pesoEmbalagem" step="0.1" required onchange="autoCalcGramas()">
+                </div>
+                <div class="form-group">
+                    <label>Comprimento de Filamento (m):</label>
+                    <input type="number" id="metros" placeholder="Auto" step="0.01" readonly>
+                    <small style="color: var(--gray); margin-top: 5px; display: block;">Calculado automaticamente</small>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Local de Armazenamento:</label>
+                    <select id="localizacao" required>
+                        <option value="">Selecione</option>
+                        <option value="Prateleira A1">Prateleira A1</option>
+                        <option value="Prateleira A2">Prateleira A2</option>
+                        <option value="Prateleira B1">Prateleira B1</option>
+                        <option value="Prateleira B2">Prateleira B2</option>
+                        <option value="Armário C">Armário C</option>
+                        <option value="Gaveta D">Gaveta D</option>
+                        <option value="Caixa Armazenagem">Caixa Armazenagem</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Status:</label>
+                    <select id="status" required>
+                        <option value="em_uso">Em Uso</option>
+                        <option value="lacrado">Lacrado</option>
+                        <option value="usado">Usado</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Foto do Filamento:</label>
+                <input type="file" id="fotoBlobInput" accept="image/*">
+                <small style="color: var(--gray); margin-top: 5px; display: block;">Faça upload de uma foto do carretel</small>
+            </div>
+
+            <div class="form-group">
+                <label>Comentários:</label>
+                <textarea id="comentarios"></textarea>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeAddModal()">Cancelar</button>
+                <button type="submit" class="btn-primary">Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL ADICIONAR/EDITAR IMPRESSORA -->
+<div id="printerModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-title" id="printerModalTitle">Nova Impressora</div>
+        <form onsubmit="savePrinter(event)">
+            <div class="form-group">
+                <label>Nome da Impressora:</label>
+                <input type="text" id="printerNome" required placeholder="Ex: Ender 3 S1">
+            </div>
+            <div class="form-group">
+                <label>Modelo:</label>
+                <input type="text" id="printerModelo" placeholder="Ex: Creality">
+            </div>
+            <div class="form-group">
+                <label>Quantidade de Slots:</label>
+                <select id="printerSlots">
+                    <option value="1">1 Slot</option>
+                    <option value="2">2 Slots</option>
+                    <option value="4">4 Slots (AMS/MMU)</option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closePrinterModal()">Cancelar</button>
+                <button type="submit" class="btn-primary">Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL DETALHES -->
+<div id="detailsModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-title">Detalhes do Filamento</div>
+        <div id="detailsContent"></div>
+        <div class="modal-footer">
+            <button class="btn-secondary" onclick="closeDetailsModal()">Fechar</button>
+            <button class="btn-primary" onclick="editCurrentFilament()" style="flex: 1;">Editar</button>
+            <button class="btn-danger" onclick="deleteCurrentFilament()" style="flex: 1;">Deletar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // DENSIDADES PADRÃO
+    const materialDensities = {
+        'PLA': 1.24,
+        'PETG': 1.27,
+        'ABS': 1.04,
+        'TPU': 1.22,
+        'Nylon': 1.08
+    };
+
+    const colorMap = {
+        'AZUL': '#3b82f6', 'AMARELO': '#fbbf24', 'ROXO': '#a855f7',
+        'CINZA': '#9ca3af', 'LARANJA': '#f97316', 'PRETO': '#1f2937',
+        'VERMELHO': '#ef4444', 'VERDE': '#22c55e', 'BRANCO': '#f5f5f5',
+        'ROSA': '#ec4899', 'MARROM': '#92400e', 'BEGE': '#daa520'
+    };
+
+    let filaments = [];
+    let filteredFilaments = [];
+    let printers = [];
+    let currentEditId = null;
+    let currentDetailId = null;
+    let currentPrinterEditId = null;
+    let usageHistory = [];
+    let scannerActive = false;
+    let currentQRFilament = null;
+
+    function init() {
+        loadData();
+        setDefaultDate();
+        render();
+    }
+
+    function setDefaultDate() {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        document.getElementById('dataImpressao').value = `${yyyy}-${mm}-${dd}`;
+    }
+
+    function loadData() {
+        const stored = localStorage.getItem('filamentos_pro');
+        if (stored) {
+            filaments = JSON.parse(stored);
+        } else {
+            loadDefaultData();
+        }
+        filteredFilaments = [...filaments];
+
+        const storedUsage = localStorage.getItem('usage_history');
+        usageHistory = storedUsage ? JSON.parse(storedUsage) : [];
+
+        const storedPrinters = localStorage.getItem('printers_data');
+        printers = storedPrinters ? JSON.parse(storedPrinters) : [];
+    }
+
+    function loadDefaultData() {
+        fetch('filamentos_data.json')
+            .then(r => r.json())
+            .then(data => {
+                filaments = data.map(f => ({
+                    ...f,
+                    localizacao: f.localizacao || 'Prateleira A1',
+                    foto: null,
+                    fotoBlob: null
+                }));
+                saveData();
+                render();
+            })
+            .catch(() => {
+                filaments = [];
+            });
+    }
+
+    function saveData() {
+        const dataToSave = filaments.map(f => ({
+            ...f,
+            fotoBlob: f.fotoBlob ? f.fotoBlob : null
+        }));
+        localStorage.setItem('filamentos_pro', JSON.stringify(dataToSave));
+        localStorage.setItem('usage_history', JSON.stringify(usageHistory));
+        localStorage.setItem('printers_data', JSON.stringify(printers));
+    }
+
+    function render() {
+        populateSelects();
+        renderStats();
+        renderCards();
+        renderUsageHistory();
+        renderPrinters();
+    }
+
+    function populateSelects() {
+        // Populate color filter
+        const colors = [...new Set(filaments.map(f => f.cor_dominante))].sort();
+        const colorFilter = document.getElementById('colorFilter');
+        const existingOptions = colorFilter.querySelectorAll('option:not(:first-child)');
+        existingOptions.forEach(opt => opt.remove());
+        colors.forEach(color => {
+            const opt = document.createElement('option');
+            opt.value = color;
+            opt.text = color;
+            colorFilter.appendChild(opt);
+        });
+
+        // Populate filament selects (QR)
+        ['filamentSelectQR'].forEach(id => {
+            const sel = document.getElementById(id);
+            if (sel) {
+                sel.innerHTML = '<option value="">-- Selecione um filamento --</option>';
+                filaments.forEach(f => {
+                    const opt = document.createElement('option');
+                    opt.value = f.id;
+                    opt.text = `${f.cor_dominante} - ${f.cor}`;
+                    sel.appendChild(opt);
+                });
+            }
+        });
+
+        // Populate printer select (uso)
+        const printerSelect = document.getElementById('printerSelectUso');
+        if (printerSelect) {
+            printerSelect.innerHTML = '<option value="">-- Selecione uma impressora --</option>';
+            printers.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.id;
+                opt.text = p.nome;
+                printerSelect.appendChild(opt);
+            });
+        }
+    }
+
+    function renderStats() {
+        const total = filteredFilaments.length;
+        const totalEstoque = filteredFilaments.reduce((s, f) => {
+            const e = f.peso_balanca - f.peso_embalagem;
+            return s + Math.max(0, e);
+        }, 0);
+        const totalValue = filteredFilaments.reduce((s, f) => s + f.preco_pago, 0);
+        const lowStock = filteredFilaments.filter(f => {
+            const e = f.peso_balanca - f.peso_embalagem;
+            return f.gramas > 0 && (e / f.gramas) < 0.2 && f.status === 'em_uso';
+        }).length;
+
+        document.getElementById('statsGrid').innerHTML = `
+            <div class="stat-card">
+                <div class="stat-label">Filamentos</div>
+                <div class="stat-value">${total}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Estoque (g)</div>
+                <div class="stat-value">${totalEstoque.toFixed(0)}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Valor Total</div>
+                <div class="stat-value">R$ ${totalValue.toFixed(2)}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Baixo Estoque</div>
+                <div class="stat-value" style="color: var(--danger);">${lowStock}</div>
+            </div>
+        `;
+    }
+
+    function renderCards() {
+        const container = document.getElementById('filamentGrid');
+        if (filteredFilaments.length === 0) {
+            container.innerHTML = '<div class="empty-state" style="grid-column: 1/-1;"><div class="empty-icon">📦</div><div class="empty-text">Nenhum filamento encontrado</div></div>';
+            return;
+        }
+
+        container.innerHTML = filteredFilaments.map(f => {
+            const remaining = f.peso_balanca - f.peso_embalagem;
+            const percentage = f.gramas > 0 ? (remaining / f.gramas) * 100 : 0;
+            const isLowStock = percentage < 20 && f.status === 'em_uso';
+            const borderColor = colorMap[f.cor_dominante] || '#999';
+
+            let imageHtml = '';
+            if (f.fotoBlob) {
+                imageHtml = `<img src="${f.fotoBlob}" class="card-image" alt="Foto">`;
+            } else {
+                imageHtml = `<div class="card-image" style="background: ${borderColor}; color: white; font-weight: bold;">${f.cor_dominante}</div>`;
+            }
+
+            return `
+                <div class="filament-card" style="border-top-color: ${borderColor};">
+                    ${imageHtml}
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">${f.cor}</div>
+                            <span class="badge badge-${f.status}">${f.status.replace('_', ' ').toUpperCase()}</span>
+                        </div>
+                    </div>
+                    <div class="location-badge">📍 ${f.localizacao || 'Sem local'}</div>
+                    <div class="info-row">
+                        <span class="info-label">Marca:</span>
+                        <span>${f.marca}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Material:</span>
+                        <span>${f.material}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Preço:</span>
+                        <span>R$ ${f.preco_pago.toFixed(2)}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Estoque:</span>
+                        <span>${remaining.toFixed(0)}g / ${f.gramas}g</span>
+                    </div>
+                    ${isLowStock ? '<div style="background: var(--warning); color: white; padding: 6px; border-radius: 6px; font-size: 0.8em; text-align: center; margin: 8px 0;">⚠️ Baixo estoque!</div>' : ''}
+                    <div class="stock-bar">
+                        <div class="stock-fill" style="width: ${Math.min(100, percentage)}%;"></div>
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn-secondary btn-small" onclick="viewDetails(${f.id})">Detalhes</button>
+                        <button class="btn-primary btn-small" onclick="editFilament(${f.id})">Editar</button>
+                        <button class="btn-danger btn-small" onclick="deleteFilament(${f.id})">Deletar</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function renderUsageHistory() {
+        const list = document.getElementById('usageList');
+        if (usageHistory.length === 0) {
+            list.innerHTML = '<p style="color: var(--gray); text-align: center; padding: 20px;">Nenhum uso registrado ainda</p>';
+            return;
+        }
+
+        list.innerHTML = usageHistory.slice().reverse().slice(0, 20).map(u => {
+            const f = filaments.find(x => x.id === u.filamentId);
+            const p = printers.find(x => x.id === u.printerId);
+            return `
+                <div class="usage-item" style="padding: 10px; border-bottom: 1px solid var(--border);">
+                    <div style="display: flex; justify-content: space-between;">
+                        <strong>${f ? f.cor : 'Filamento Deletado'}</strong>
+                        <span style="color: var(--danger); font-weight: bold;">-${u.peso}g</span>
+                    </div>
+                    <div style="font-size: 0.85em; color: var(--gray);">
+                        ${u.data} ${u.nomePeca ? `| ${u.nomePeca}` : ''}
+                        ${p ? `<br>🖨️ ${p.nome} (Slot ${u.slot})` : ''}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // CÁLCULOS AUTOMÁTICOS
+    function autoCalcGramas() {
+        const balanca = parseFloat(document.getElementById('pesoBalanca').value) || 0;
+        const embalagem = parseFloat(document.getElementById('pesoEmbalagem').value) || 0;
+        document.getElementById('gramas').value = (balanca - embalagem).toFixed(2);
+        updateMetros();
+    }
+
+    // ✅ CORREÇÃO CRÍTICA: fechando a função updateMetros() corretamente
+    function updateMetros() {
+        const gramas = parseFloat(document.getElementById('gramas').value) || 0;
+        const material = document.getElementById('material').value;
+        const diametro = parseFloat(document.getElementById('diametro').value) || 1.75;
+        const densidade = parseFloat(document.getElementById('densidade').value) || materialDensities[material] || 1.24;
+
+        if (gramas > 0 && diametro > 0 && densidade > 0) {
+            // Fórmula: L = M / (π × (d/2)² × ρ)
+            // d em mm -> converter para cm
+            const d_cm = diametro / 10;
+            const volume = Math.PI * Math.pow(d_cm / 2, 2);
+            const comprimento = gramas / (volume * densidade);
+            document.getElementById('metros').value = comprimento.toFixed(2);
+        }
+    }
+
+    function switchTab(tabId, element) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+
+        const targetTab = document.getElementById(tabId);
+        if (targetTab) {
+            targetTab.classList.add('active');
+        }
+
+        if (element) {
+            element.classList.add('active');
+        } else {
+            const tabs = document.querySelectorAll('.nav-tab');
+            tabs.forEach(t => {
+                if (t.getAttribute('onclick') && t.getAttribute('onclick').includes(`'${tabId}'`)) {
+                    t.classList.add('active');
+                }
+            });
+        }
+    }
+
+    function showTab(tabId, element) {
+        switchTab(tabId, element);
+    }
+
+    // ✅ CORREÇÃO: função estava "colada" e quebrava o script
+    function filterFilaments() {
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        const color = document.getElementById('colorFilter').value;
+        const status = document.getElementById('statusFilter').value;
+        const material = document.getElementById('materialFilter').value;
+
+        filteredFilaments = filaments.filter(f => {
+            const matchSearch = !search || (f.cor || '').toLowerCase().includes(search) || (f.marca || '').toLowerCase().includes(search);
+            const matchColor = !color || f.cor_dominante === color;
+            const matchStatus = !status || f.status === status;
+            const matchMaterial = !material || f.material === material;
+            return matchSearch && matchColor && matchStatus && matchMaterial;
+        });
+
+        renderCards();
+        renderStats();
+    }
+
+    function filterByStatus(status) {
+        document.getElementById('statusFilter').value = status;
+        filterFilaments();
+    }
+
+    function showLowStock() {
+        filteredFilaments = filaments.filter(f => {
+            const remaining = f.peso_balanca - f.peso_embalagem;
+            return remaining < f.gramas * 0.2;
+        });
+        renderCards();
+        renderStats();
+    }
+
+    // REGISTRO DE USO (SLOTS)
+    function updateUsageSlots() {
+        const printerId = parseInt(document.getElementById('printerSelectUso').value);
+        const container = document.getElementById('usageSlotsContainer');
+        container.innerHTML = '';
+
+        if (!printerId) return;
+
+        const printer = printers.find(p => p.id === printerId);
+        if (!printer) return;
+
+        for (let i = 1; i <= printer.slots; i++) {
+            const slotDiv = document.createElement('div');
+            slotDiv.className = 'form-row';
+            slotDiv.style.background = '#f8fafc';
+            slotDiv.style.padding = '15px';
+            slotDiv.style.borderRadius = '8px';
+            slotDiv.style.marginBottom = '10px';
+            slotDiv.style.border = '1px solid var(--border)';
+
+            slotDiv.innerHTML = `
+                <div style="width: 100%; font-weight: bold; margin-bottom: 10px; color: var(--primary);">Slot ${i}</div>
+                <div class="form-group" style="flex: 2;">
+                    <label>Filamento:</label>
+                    <select class="slot-filament" data-slot="${i}">
+                        <option value="">-- Não utilizado --</option>
+                        ${filaments.map(f => `<option value="${f.id}">${f.cor_dominante} - ${f.cor} (${(f.peso_balanca - f.peso_embalagem).toFixed(0)}g)</option>`).join('')}
+                    </select>
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label>Consumo (g):</label>
+                    <input type="number" class="slot-weight" data-slot="${i}" placeholder="0.0" step="0.1">
+                </div>
+            `;
+            container.appendChild(slotDiv);
+        }
+    }
+
+    function registrarUsoMultiplo() {
+        const printerId = document.getElementById('printerSelectUso').value;
+        const data = document.getElementById('dataImpressao').value;
+        const nomePeca = document.getElementById('nomePeca').value;
+
+        if (!printerId || !data) {
+            showToast('Selecione a impressora e a data');
+            return;
+        }
+
+        const slots = document.querySelectorAll('.slot-filament');
+        let registeredCount = 0;
+
+        slots.forEach(slotSelect => {
+            const slotNum = slotSelect.dataset.slot;
+            const filamentId = parseInt(slotSelect.value);
+            const weightInput = document.querySelector(`.slot-weight[data-slot="${slotNum}"]`);
+            const peso = parseFloat(weightInput.value);
+
+            if (filamentId && peso > 0) {
+                const filament = filaments.find(f => f.id === filamentId);
+                if (filament) {
+                    filament.peso_balanca -= peso;
+                    if (filament.peso_balanca < filament.peso_embalagem) {
+                        filament.peso_balanca = filament.peso_embalagem;
+                    }
+
+                    filament.gramas = filament.peso_balanca - filament.peso_embalagem;
+                    updateMetrosForFilament(filament);
+
+                    usageHistory.push({
+                        filamentId: filamentId,
+                        printerId: parseInt(printerId),
+                        slot: parseInt(slotNum),
+                        peso: peso,
+                        data: data,
+                        nomePeca: nomePeca,
+                        timestamp: new Date().getTime()
+                    });
+                    registeredCount++;
+                }
+            }
+        });
+
+        if (registeredCount > 0) {
+            saveData();
+            render();
+            showToast(`✓ ${registeredCount} registro(s) de uso realizados!`);
+
+            document.querySelectorAll('.slot-weight').forEach(i => i.value = '');
+            document.getElementById('nomePeca').value = '';
+        } else {
+            showToast('Nenhum consumo válido informado nos slots');
+        }
+    }
+
+    function updateMetrosForFilament(f) {
+        const gramas = f.gramas || 0;
+        const diametro = parseFloat(f.diametro) || 1.75;
+        const densidade = f.densidade || materialDensities[f.material] || 1.24;
+
+        if (gramas > 0 && diametro > 0 && densidade > 0) {
+            const d_cm = diametro / 10;
+            const volume = Math.PI * Math.pow(d_cm / 2, 2);
+            f.metros = gramas / (volume * densidade);
+        }
+    }
+
+    // IMPRESSORAS
+    function openPrinterModal(id = null) {
+        if (id) {
+            const p = printers.find(x => x.id === id);
+            if (!p) return;
+            currentPrinterEditId = id;
+            document.getElementById('printerModalTitle').textContent = 'Editar Impressora';
+            document.getElementById('printerNome').value = p.nome;
+            document.getElementById('printerModelo').value = p.modelo;
+            document.getElementById('printerSlots').value = p.slots;
+        } else {
+            currentPrinterEditId = null;
+            document.getElementById('printerModalTitle').textContent = 'Nova Impressora';
+            document.querySelector('#printerModal form').reset();
+        }
+        document.getElementById('printerModal').classList.add('active');
+    }
+
+    function closePrinterModal() {
+        document.getElementById('printerModal').classList.remove('active');
+    }
+
+    function savePrinter(event) {
+        event.preventDefault();
+        const printerData = {
+            id: currentPrinterEditId || Date.now(),
+            nome: document.getElementById('printerNome').value,
+            modelo: document.getElementById('printerModelo').value,
+            slots: parseInt(document.getElementById('printerSlots').value)
+        };
+
+        if (currentPrinterEditId) {
+            const index = printers.findIndex(p => p.id === currentPrinterEditId);
+            printers[index] = printerData;
+        } else {
+            printers.push(printerData);
+        }
+
+        saveData();
+        render();
+        closePrinterModal();
+        showToast('Impressora salva com sucesso!');
+    }
+
+    function deletePrinter(id) {
+        if (confirm('Deseja realmente excluir esta impressora?')) {
+            printers = printers.filter(p => p.id !== id);
+            saveData();
+            render();
+            showToast('Impressora removida');
+        }
+    }
+
+    function renderPrinters() {
+        const container = document.getElementById('printerGrid');
+        if (printers.length === 0) {
+            container.innerHTML = '<div class="empty-state" style="grid-column: 1/-1;"><div class="empty-icon">🖨️</div><div class="empty-text">Nenhuma impressora cadastrada</div></div>';
+            return;
+        }
+
+        container.innerHTML = printers.map(p => `
+            <div class="filament-card" style="border-top-color: var(--primary);">
+                <div class="card-header">
+                    <div class="card-title">${p.nome}</div>
+                    <span class="badge badge-em_uso">${p.slots} SLOTS</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Modelo:</span>
+                    <span>${p.modelo || 'N/A'}</span>
+                </div>
+                <div class="card-actions">
+                    <button class="btn-primary btn-small" onclick="openPrinterModal(${p.id})">Editar</button>
+                    <button class="btn-danger btn-small" onclick="deletePrinter(${p.id})">Deletar</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // MODAIS FILAMENTO
+    function openAddModal() {
+        currentEditId = null;
+        document.getElementById('modalTitle').textContent = 'Novo Filamento';
+        document.querySelector('#addModal form').reset();
+        document.getElementById('addModal').classList.add('active');
+
+        const material = document.getElementById('material').value || 'PLA';
+        if (material && materialDensities[material]) {
+            document.getElementById('densidade').value = materialDensities[material];
+        }
+    }
+
+    function closeAddModal() {
+        document.getElementById('addModal').classList.remove('active');
+    }
+
+    function editFilament(id) {
+        const f = filaments.find(x => x.id === id);
+        if (!f) return;
+
+        currentEditId = id;
+        document.getElementById('modalTitle').textContent = 'Editar Filamento';
+
+        document.getElementById('corDominante').value = f.cor_dominante;
+        document.getElementById('cor').value = f.cor;
+        document.getElementById('marca').value = f.marca;
+        document.getElementById('fornecedor').value = f.fornecedor || '';
+        document.getElementById('precoPago').value = f.preco_pago;
+        document.getElementById('material').value = f.material;
+        document.getElementById('diametro').value = f.diametro;
+        document.getElementById('densidade').value = f.densidade;
+        document.getElementById('gramas').value = f.gramas;
+        document.getElementById('pesoBalanca').value = f.peso_balanca;
+        document.getElementById('pesoEmbalagem').value = f.peso_embalagem;
+        document.getElementById('metros').value = f.metros;
+        document.getElementById('localizacao').value = f.localizacao || '';
+        document.getElementById('status').value = f.status;
+        document.getElementById('comentarios').value = f.comentarios || '';
+
+        document.getElementById('addModal').classList.add('active');
+    }
+
+    function editCurrentFilament() {
+        closeDetailsModal();
+        editFilament(currentDetailId);
+    }
+
+    function saveFilament(event) {
+        event.preventDefault();
+
+        const fileInput = document.getElementById('fotoBlobInput');
+        const reader = new FileReader();
+
+        reader.onload = (e) => {
+            const data = {
+                cor_dominante: document.getElementById('corDominante').value,
+                cor: document.getElementById('cor').value,
+                marca: document.getElementById('marca').value,
+                fornecedor: document.getElementById('fornecedor').value,
+                preco_pago: parseFloat(document.getElementById('precoPago').value),
+                material: document.getElementById('material').value,
+                diametro: parseFloat(document.getElementById('diametro').value),
+                densidade: parseFloat(document.getElementById('densidade').value),
+                gramas: parseFloat(document.getElementById('gramas').value) || 0,
+                peso_balanca: parseFloat(document.getElementById('pesoBalanca').value),
+                peso_embalagem: parseFloat(document.getElementById('pesoEmbalagem').value),
+                metros: parseFloat(document.getElementById('metros').value) || 0,
+                localizacao: document.getElementById('localizacao').value,
+                status: document.getElementById('status').value,
+                comentarios: document.getElementById('comentarios').value,
+                fotoBlob: e.target.result || null
+            };
+
+            if (currentEditId) {
+                const existing = filaments.find(x => x.id === currentEditId);
+                Object.assign(existing, data);
+                showToast('Filamento atualizado!');
+            } else {
+                data.id = Math.max(...filaments.map(x => x.id), 0) + 1;
+                filaments.push(data);
+                showToast('Filamento adicionado!');
+            }
+
+            saveData();
+            closeAddModal();
+            render();
+            filterFilaments();
+        };
+
+        if (fileInput.files.length > 0) {
+            reader.readAsDataURL(fileInput.files[0]);
+        } else {
+            reader.onload({target: {result: null}});
+        }
+    }
+
+    function deleteFilament(id) {
+        if (confirm('Deletar filamento?')) {
+            filaments = filaments.filter(x => x.id !== id);
+            saveData();
+            filterFilaments();
+            showToast('Filamento deletado!');
+        }
+    }
+
+    function deleteCurrentFilament() {
+        deleteFilament(currentDetailId);
+        closeDetailsModal();
+    }
+
+    function viewDetails(id) {
+        const f = filaments.find(x => x.id === id);
+        currentDetailId = id;
+
+        const remaining = f.peso_balanca - f.peso_embalagem;
+        const percentage = f.gramas > 0 ? (remaining / f.gramas) * 100 : 0;
+        const costPerGram = f.gramas > 0 ? (f.preco_pago / f.gramas).toFixed(4) : '0.0000';
+        const costPerMeter = f.metros > 0 ? (f.preco_pago / f.metros).toFixed(4) : '0.0000';
+
+        const imageHtml = f.fotoBlob ? `<img src="${f.fotoBlob}" style="width: 100%; max-height: 300px; border-radius: 8px; margin-bottom: 15px; object-fit: cover;">` : '';
+
+        document.getElementById('detailsContent').innerHTML = `
+            ${imageHtml}
+            <div style="background: var(--light); padding: 20px; border-radius: 8px;">
+                <div class="info-row" style="border-bottom: 1px solid var(--border); padding-bottom: 10px;">
+                    <span class="info-label">Cor</span>
+                    <span>${f.cor_dominante} - ${f.cor}</span>
+                </div>
+                <div class="info-row" style="border-bottom: 1px solid var(--border); padding-bottom: 10px;">
+                    <span class="info-label">Marca</span>
+                    <span>${f.marca}</span>
+                </div>
+                <div class="info-row" style="border-bottom: 1px solid var(--border); padding-bottom: 10px;">
+                    <span class="info-label">Material</span>
+                    <span>${f.material}</span>
+                </div>
+                <div class="info-row" style="border-bottom: 1px solid var(--border); padding-bottom: 10px;">
+                    <span class="info-label">Local</span>
+                    <span>📍 ${f.localizacao}</span>
+                </div>
+                <div class="info-row" style="border-bottom: 1px solid var(--border); padding-bottom: 10px;">
+                    <span class="info-label">Preço Pago</span>
+                    <span>R$ ${f.preco_pago.toFixed(2)}</span>
+                </div>
+                <div class="info-row" style="border-bottom: 1px solid var(--border); padding-bottom: 10px;">
+                    <span class="info-label">Diâmetro</span>
+                    <span>${f.diametro}mm</span>
+                </div>
+                <div class="info-row" style="border-bottom: 1px solid var(--border); padding-bottom: 10px;">
+                    <span class="info-label">Densidade</span>
+                    <span>${f.densidade} g/cm³</span>
+                </div>
+                <div class="info-row" style="border-bottom: 1px solid var(--border); padding-bottom: 10px;">
+                    <span class="info-label">Peso Total</span>
+                    <span>${f.gramas}g</span>
+                </div>
+                <div class="info-row" style="border-bottom: 1px solid var(--border); padding-bottom: 10px;">
+                    <span class="info-label">Comprimento Total</span>
+                    <span>${(f.metros || 0).toFixed(0)}m</span>
+                </div>
+                <div class="info-row" style="border-bottom: 1px solid var(--border); padding-bottom: 10px;">
+                    <span class="info-label">Estoque Restante</span>
+                    <span>${remaining.toFixed(0)}g (${percentage.toFixed(0)}%)</span>
+                </div>
+                <div class="info-row" style="border-bottom: 1px solid var(--border); padding-bottom: 10px;">
+                    <span class="info-label">Custo/Grama</span>
+                    <span>R$ ${costPerGram}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Custo/Metro</span>
+                    <span>R$ ${costPerMeter}</span>
+                </div>
+                ${f.comentarios ? `<div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border);"><strong>Notas:</strong><p>${f.comentarios}</p></div>` : ''}
+            </div>
+        `;
+
+        document.getElementById('detailsModal').classList.add('active');
+    }
+
+    function closeDetailsModal() {
+        document.getElementById('detailsModal').classList.remove('active');
+    }
+
+    // QR CODE
+    function generateQR() {
+        const filamentId = parseInt(document.getElementById('filamentSelectQR').value);
+        if (!filamentId) return;
+
+        const filament = filaments.find(f => f.id === filamentId);
+        if (!filament) return;
+
+        currentQRFilament = filament;
+
+        const qrData = JSON.stringify({
+            id: filament.id,
+            cor: filament.cor,
+            marca: filament.marca,
+            localizacao: filament.localizacao
+        });
+
+        document.getElementById('qrcode-generator').innerHTML = '';
+        new QRCode(document.getElementById('qrcode-generator'), {
+            text: qrData,
+            width: 256,
+            height: 256
+        });
+
+        document.getElementById('qrOutput').style.display = 'block';
+    }
+
+    function printQRCode() {
+        if (!currentQRFilament) return;
+
+        const printWindow = window.open('', '', 'height=400,width=400');
+        const qrcodeHtml = document.getElementById('qrcode-generator').innerHTML;
+
+        printWindow.document.write(`
+            <html>
+            <head>
+                <title>Etiqueta QR - ${currentQRFilament.cor}</title>
+                <style>
+                    body { text-align: center; padding: 20px; font-family: Arial; }
+                    .label { border: 2px solid black; padding: 20px; width: 300px; margin: 0 auto; }
+                    h3 { margin: 0; color: #333; }
+                    p { margin: 5px 0; color: #666; font-size: 12px; }
+                    @media print { body { margin: 0; } }
+                </style>
+            </head>
+            <body>
+                <div class="label">
+                    <h3>${currentQRFilament.cor}</h3>
+                    <p>${currentQRFilament.marca}</p>
+                    <p>📍 ${currentQRFilament.localizacao}</p>
+                    ${qrcodeHtml}
+                </div>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
+    }
+
+    let html5QrCodeScanner = null;
+
+    function startScanning() {
+        if (!html5QrCodeScanner) {
+            html5QrCodeScanner = new Html5Qrcode("scanner");
+        }
+
+        const config = { fps: 10, qrbox: 250 };
+
+        html5QrCodeScanner.start(
+            { facingMode: "environment" },
+            config,
+            (decodedText) => {
+                try {
+                    const data = JSON.parse(decodedText);
+                    const filament = filaments.find(f => f.id === data.id);
+                    if (filament) {
+                        document.getElementById('scanResult').style.display = 'block';
+                        document.getElementById('scanResult').innerHTML = `
+                            <div style="background: var(--success); color: white; padding: 15px; border-radius: 8px;">
+                                <strong>✓ Encontrado!</strong><br>
+                                ${filament.cor}<br>
+                                ${filament.marca}<br>
+                                📍 ${filament.localizacao}
+                                <button class="btn-secondary btn-small" style="width: 100%; margin-top: 10px;" onclick="viewDetails(${filament.id})">Ver Detalhes</button>
+                            </div>
+                        `;
+                        stopScanning();
+                    }
+                } catch (e) {
+                    console.error("Erro ao processar QR Code", e);
+                }
+            }
+        ).catch(err => {
+            showToast("Erro ao acessar câmera: " + err);
+        });
+
+        scannerActive = true;
+        showToast('Scanner iniciado');
+    }
+
+    function stopScanning() {
+        if (html5QrCodeScanner && scannerActive) {
+            html5QrCodeScanner.stop().then(() => {
+                scannerActive = false;
+                showToast('Scanner parado');
+            }).catch(err => console.error(err));
+        }
+    }
+
+    // CALCULADORA DE PREÇO
+    function calcularPreco() {
+        const custoMaterial = parseFloat(document.getElementById('calcCustoMaterial').value) || 0;
+        const tempoHoras = parseFloat(document.getElementById('calcTempoHoras').value) || 0;
+        const custoEnergia = parseFloat(document.getElementById('calcCustoEnergia').value) || 0.50;
+        const custoMaoObra = parseFloat(document.getElementById('calcCustoMaoObra').value) || 50;
+        const margemLucro = parseFloat(document.getElementById('calcMargemLucro').value) || 40;
+
+        const custoEnergiaTotal = tempoHoras * custoEnergia;
+        const custoMaoObraTotal = tempoHoras * custoMaoObra;
+        const custoTotal = custoMaterial + custoEnergiaTotal + custoMaoObraTotal;
+        const lucro = custoTotal * (margemLucro / 100);
+        const precoFinal = custoTotal + lucro;
+
+        document.getElementById('resultado-material').textContent = `R$ ${custoMaterial.toFixed(2)}`;
+        document.getElementById('resultado-energia').textContent = `R$ ${custoEnergiaTotal.toFixed(2)}`;
+        document.getElementById('resultado-mao').textContent = `R$ ${custoMaoObraTotal.toFixed(2)}`;
+        document.getElementById('resultado-subtotal').textContent = `R$ ${custoTotal.toFixed(2)}`;
+        document.getElementById('resultado-preco').textContent = `R$ ${precoFinal.toFixed(2)}`;
+        document.getElementById('resultado-lucro').textContent = `Lucro: R$ ${lucro.toFixed(2)} (${margemLucro}%)`;
+
+        document.getElementById('calculoResultado').style.display = 'block';
+    }
+
+    function copiarPreco() {
+        const preco = document.getElementById('resultado-preco').textContent;
+        navigator.clipboard.writeText(preco);
+        showToast('Preço copiado!');
+    }
+
+    // EXPORTAÇÃO/IMPORTAÇÃO
+    function exportJSON() {
+        const blob = new Blob([JSON.stringify(filaments, null, 2)], { type: 'application/json' });
+        downloadFile(blob, 'filamentos_backup.json');
+        showToast('Exportado como JSON!');
+    }
+
+    function exportCSV() {
+        const headers = ['ID', 'Cor', 'Marca', 'Material', 'Preço', 'Peso', 'Metros', 'Local', 'Status'];
+        const rows = filaments.map(f => [f.id, f.cor, f.marca, f.material, f.preco_pago, f.gramas, (f.metros || 0).toFixed(0), f.localizacao, f.status]);
+        const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        downloadFile(blob, 'filamentos.csv');
+        showToast('Exportado como CSV!');
+    }
+
+    function downloadFile(blob, name) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    function importData() {
+        document.getElementById('importFile').click();
+    }
+
+    function handleImport(event) {
+        const file = event.target.files[0];
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const data = JSON.parse(e.target.result);
+
+                // Aceita: array direto (filamentos) OU objeto { filaments, printers, usageHistory }
+                if (Array.isArray(data)) {
+                    filaments = data;
+                } else if (data && typeof data === 'object') {
+                    if (Array.isArray(data.filaments)) filaments = data.filaments;
+                    if (Array.isArray(data.printers)) printers = data.printers;
+                    if (Array.isArray(data.usageHistory)) usageHistory = data.usageHistory;
+                }
+
+                saveData();
+                render();
+                showToast('Dados importados!');
+            } catch (err) {
+                console.error(err);
+                showToast('Erro ao importar');
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    function clearAllData() {
+        if (confirm('Tem CERTEZA? Esta ação não pode ser desfeita!')) {
+            filaments = [];
+            usageHistory = [];
+            saveData();
+            render();
+            showToast('Todos os dados foram deletados!');
+        }
+    }
+
+    function showToast(msg) {
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.textContent = msg;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+    init();
+</script>
+</body>
+</html>
