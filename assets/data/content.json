@@ -1,6 +1,0 @@
-{
-  "sections": [
-    { "title": "Olá!", "body": "Isso foi carregado do content.json no GitHub Pages." },
-    { "title": "Status", "body": "Se você está lendo isso, o fetch funcionou." }
-  ]
-}
