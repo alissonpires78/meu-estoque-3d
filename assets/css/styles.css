@@ -1,30 +1,34 @@
-:root {
-  --fg: #111;
-  --muted: #666;
-  --border: #eaeaea;
-  --bg: #fff;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
-* { box-sizing: border-box; }
+:root {
+  --primary: #667eea;
+  --secondary: #764ba2;
+  --danger: #ff6b6b;
+  --success: #51cf66;
+  --warning: #fbbf24;
+  --dark: #1f2937;
+  --light: #f9fafb;
+  --border: #e5e7eb;
+  --gray: #6b7280;
+}
 
 body {
-  margin: 0;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-  color: var(--fg);
-  background: var(--bg);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  min-height: 100vh;
+  padding: 15px;
+  color: var(--dark);
 }
 
-.container {
-  max-width: 980px;
-  margin: 0 auto;
-  padding: 16px;
-}
+.container { max-width: 1800px; margin: 0 auto; }
 
-.muted { color: var(--muted); }
+/* ... (cole o restante do CSS exatamente como no seu HTML) ... */
 
-.card {
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 14px;
-  margin: 12px 0;
+@media (max-width: 768px) {
+  header { flex-direction: column; text-align: center; }
+  .nav-tabs { flex-direction: column; gap: 8px; }
+  .nav-tab { width: 100%; }
+  .form-row { grid-template-columns: 1fr; }
+  .card-actions { flex-direction: column; }
+  .card-actions button { width: 100%; }
 }
