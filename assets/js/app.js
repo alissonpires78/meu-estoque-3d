@@ -184,4 +184,121 @@ function handleImport(e) {
 }
 function clearAllData() { if(confirm('Apagar tudo?')) { localStorage.clear(); location.reload(); } }
 
+// Variáveis adicionais para histórico e impressoras
+let usageHistory = JSON.parse(localStorage.getItem('usage_history') || '[]');
+let printers = JSON.parse(localStorage.getItem('printers_data') || '[]');
+
+// Se não houver impressoras, cria uma padrão para o sistema não ficar vazio
+if (printers.length === 0) {
+    printers = [{id: 1, nome: "Minha Impressora", slots: 1, modelo: "Padrão"}];
+    localStorage.setItem('printers_data', JSON.stringify(printers));
+}
+
+// Atualiza os campos de uso conforme a impressora selecionada
+function updateUsageSlots() {
+  const printerId = parseInt(document.getElementById('printerSelectUso').value);
+  const container = document.getElementById('usageSlotsContainer');
+  container.innerHTML = '';
+
+  if (!printerId) return;
+  const printer = printers.find(p => p.id === printerId);
+  if (!printer) return;
+
+  for (let i = 1; i <= printer.slots; i++) {
+    const slotDiv = document.createElement('div');
+    slotDiv.className = 'form-row';
+    slotDiv.style.background = '#f9f9f9';
+    slotDiv.style.padding = '10px';
+    slotDiv.style.marginBottom = '10px';
+    slotDiv.style.borderRadius = '8px';
+    
+    slotDiv.innerHTML = `
+      <div class="form-group">
+        <label>Filamento Slot ${i}:</label>
+        <select class="slot-filament" data-slot="${i}">
+          <option value="">-- Selecione o Filamento --</option>
+          ${filaments.filter(f => f.status !== 'usado').map(f => `<option value="${f.id}">${f.cor} (${(f.peso_balanca - f.peso_embalagem).toFixed(0)}g)</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Gasto (gramas):</label>
+        <input type="number" class="slot-weight" data-slot="${i}" placeholder="0.0">
+      </div>
+    `;
+    container.appendChild(slotDiv);
+  }
+}
+
+// Processa o uso e retira do estoque
+function registrarUsoMultiplo() {
+  const printerId = document.getElementById('printerSelectUso').value;
+  const data = document.getElementById('dataImpressao').value;
+  const nomePeca = document.getElementById('nomePeca').value;
+
+  if (!printerId) { alert("Selecione uma impressora!"); return; }
+
+  const slotSelects = document.querySelectorAll('.slot-filament');
+  let teveMudanca = false;
+
+  slotSelects.forEach(select => {
+    const slotNum = select.dataset.slot;
+    const filamentId = parseInt(select.value);
+    const pesoGasto = parseFloat(document.querySelector(`.slot-weight[data-slot="${slotNum}"]`).value);
+
+    if (filamentId && pesoGasto > 0) {
+      const filament = filaments.find(f => f.id === filamentId);
+      if (filament) {
+        // Deduz o peso
+        filament.peso_balanca -= pesoGasto;
+        
+        // Registra no histórico
+        usageHistory.push({
+          data,
+          nomePeca,
+          filamentCor: filament.cor,
+          peso: pesoGasto
+        });
+        teveMudanca = true;
+      }
+    }
+  });
+
+  if (teveMudanca) {
+    saveData();
+    localStorage.setItem('usage_history', JSON.stringify(usageHistory));
+    render();
+    alert("Uso registrado e estoque atualizado!");
+    document.getElementById('usageSlotsContainer').innerHTML = '';
+  } else {
+    alert("Preencha ao menos um slot com filamento e peso!");
+  }
+}
+
+// Renderiza o histórico na tela
+function renderUsageHistory() {
+  const list = document.getElementById('usageList');
+  if (!list) return;
+  list.innerHTML = usageHistory.slice().reverse().map(u => `
+    <div style="font-size: 0.9em; border-bottom: 1px solid #eee; padding: 5px 0;">
+      <b>${u.data}</b>: -${u.peso}g de <i>${u.filamentCor}</i> ${u.nomePeca ? `(${u.nomePeca})` : ''}
+    </div>
+  `).join('');
+}
+
+// Atualize a função saveData original para incluir o histórico e impressoras
+const originalSaveData = saveData;
+saveData = function() {
+    originalSaveData();
+    localStorage.setItem('usage_history', JSON.stringify(usageHistory));
+    localStorage.setItem('printers_data', JSON.stringify(printers));
+};
+
+// Adicione a chamada do histórico no render
+const originalRender = render;
+render = function() {
+    originalRender();
+    renderUsageHistory();
+};
+
 window.onload = init;
+
