@@ -299,6 +299,78 @@ render = function() {
     originalRender();
     renderUsageHistory();
 };
+// Adicione estas funções ao seu app.js
 
+function openPrinterModal() {
+  document.getElementById('printerModalTitle').textContent = 'Nova Impressora';
+  document.querySelector('#printerModal form').reset();
+  document.getElementById('printerModal').classList.add('active');
+}
+
+function closePrinterModal() {
+  document.getElementById('printerModal').classList.remove('active');
+}
+
+function savePrinter(event) {
+  event.preventDefault();
+  
+  const newPrinter = {
+    id: Date.now(),
+    nome: document.getElementById('printerNome').value,
+    modelo: document.getElementById('printerModelo').value,
+    slots: parseInt(document.getElementById('printerSlots').value)
+  };
+
+  printers.push(newPrinter);
+  saveData();
+  render(); // Isso vai atualizar a lista de impressoras e os selects
+  closePrinterModal();
+  alert('Impressora cadastrada com sucesso!');
+}
+
+function deletePrinter(id) {
+  if (confirm('Deseja remover esta impressora?')) {
+    printers = printers.filter(p => p.id !== id);
+    saveData();
+    render();
+  }
+}
+
+// Função para desenhar os cards das impressoras na aba Impressoras
+function renderPrinters() {
+  const container = document.getElementById('printerGrid');
+  if (!container) return;
+
+  if (printers.length === 0) {
+    container.innerHTML = '<div class="empty-state" style="grid-column: 1/-1;"><div class="empty-icon">🖨️</div><div class="empty-text">Nenhuma impressora cadastrada.</div></div>';
+    return;
+  }
+
+  container.innerHTML = printers.map(p => `
+    <div class="filament-card" style="border-top-color: var(--primary);">
+      <div class="card-title"><b>${p.nome}</b></div>
+      <div class="info-row"><span>Modelo:</span><span>${p.modelo}</span></div>
+      <div class="info-row"><span>Capacidade:</span><span>${p.slots} Slot(s)</span></div>
+      <div class="card-actions">
+        <button class="btn-danger btn-small" onclick="deletePrinter(${p.id})">Remover</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// AJUSTE NA FUNÇÃO DE RENDERIZAÇÃO
+// Procure sua função render() e garanta que ela chame a renderPrinters()
+const originalRender = render;
+render = function() {
+    originalRender();
+    renderPrinters();
+    // Atualiza o select da aba "Registrar Uso"
+    const pSelect = document.getElementById('printerSelectUso');
+    if (pSelect) {
+        pSelect.innerHTML = '<option value="">-- Selecione uma impressora --</option>' + 
+        printers.map(p => `<option value="${p.id}">${p.nome}</option>`).join('');
+    }
+};
 window.onload = init;
+
 
