@@ -97,32 +97,58 @@ function render() {
 }
 
 function populateSelects() {
-  // CORES
+  // FILTRO DE CORES
   const colors = [...new Set(filaments.map(f => f.cor_dominante).filter(Boolean))].sort();
   const colorFilter = document.getElementById('colorFilter');
   if (colorFilter) {
-    const existingOptions = colorFilter.querySelectorAll('option:not(:first-child)');
-    existingOptions.forEach(opt => opt.remove());
+    colorFilter.innerHTML = '<option value="">Todas as cores</option>';
     colors.forEach(color => {
       const opt = document.createElement('option');
-      opt.value = color;
-      opt.text = color;
+      opt.value = color; opt.text = color;
       colorFilter.appendChild(opt);
     });
   }
 
-  // MARCAS (atalho sidebar) - FIX: brands agora é calculado
+  // FILTRO DE MARCAS (Tanto o principal quanto o rápido)
   const brands = [...new Set(filaments.map(f => (f.marca || '').trim()).filter(Boolean))].sort();
+  const brandFilter = document.getElementById('brandFilter');
   const brandQuick = document.getElementById("brandQuickFilter");
-  if (brandQuick) {
-    brandQuick.innerHTML = `<option value="">Filtrar por marca...</option>`;
-    brands.forEach(b => {
-      const opt = document.createElement("option");
-      opt.value = b;
-      opt.text = b;
-      brandQuick.appendChild(opt);
+  
+  [brandFilter, brandQuick].forEach(el => {
+    if (el) {
+      el.innerHTML = el.id === 'brandFilter' ? '<option value="">Todas as marcas</option>' : '<option value="">Filtrar por marca...</option>';
+      brands.forEach(b => {
+        const opt = document.createElement("option");
+        opt.value = b; opt.text = b;
+        el.appendChild(opt);
+      });
+    }
+  });
+
+  // FILTRO DE MATERIAIS (Agora dinâmico para aparecer Nylon e outros)
+  const materials = [...new Set(filaments.map(f => f.material).filter(Boolean))].sort();
+  const materialFilter = document.getElementById('materialFilter');
+  if (materialFilter) {
+    materialFilter.innerHTML = '<option value="">Todos os materiais</option>';
+    materials.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m; opt.text = m;
+      materialFilter.appendChild(opt);
     });
   }
+
+  // SELECT QR
+  const selQR = document.getElementById('filamentSelectQR');
+  if (selQR) {
+    selQR.innerHTML = '<option value="">-- Selecione um filamento --</option>';
+    filaments.forEach(f => {
+      const opt = document.createElement('option');
+      opt.value = f.id;
+      opt.text = `${f.cor_dominante} - ${f.cor}`;
+      selQR.appendChild(opt);
+    });
+  }
+}
 
   // SELECT QR
   const selQR = document.getElementById('filamentSelectQR');
