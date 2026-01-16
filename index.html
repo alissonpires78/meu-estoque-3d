@@ -18,11 +18,13 @@
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="switchTab('estoque', this)">📦 Estoque</button>
     <button class="nav-tab" onclick="switchTab('adicionar-uso', this)">➖ Registrar Uso</button>
+    <button class="nav-tab" onclick="switchTab('impressoras', this)">🖨️ Impressoras</button>
     <button class="nav-tab" onclick="switchTab('qrcode', this)">📱 QR Code</button>
     <button class="nav-tab" onclick="switchTab('calculadora', this)">💰 Calculadora</button>
     <button class="nav-tab" onclick="switchTab('ferramentas', this)">🛠️ Ferramentas</button>
   </div>
 
+  <!-- ABA ESTOQUE -->
   <div id="estoque" class="tab-content active">
     <div class="filters">
       <input type="text" id="searchInput" placeholder="Buscar..." onkeyup="filterFilaments()">
@@ -51,103 +53,64 @@
     </div>
   </div>
 
-<!-- ABA IMPRESSORAS -->
+  <!-- ABA REGISTRAR USO -->
+  <div id="adicionar-uso" class="tab-content">
+    <div class="calculator-form">
+      <h2>Registrar Consumo de Filamento</h2>
+      <div class="form-group">
+        <label>Selecione a Impressora:</label>
+        <select id="printerSelectUso" onchange="updateUsageSlots()" required>
+          <option value="">-- Selecione uma impressora --</option>
+        </select>
+      </div>
+      <div id="usageSlotsContainer"></div>
+      <div class="form-row">
+        <div class="form-group"><label>Data:</label><input type="date" id="dataImpressao"></div>
+        <div class="form-group"><label>Peça:</label><input type="text" id="nomePeca" placeholder="Nome da peça"></div>
+      </div>
+      <button class="btn-success" onclick="registrarUsoMultiplo()" style="width: 100%; margin-top: 20px;">✓ Confirmar e Deduzir</button>
+    </div>
+    <div class="calculator-form">
+      <h3>Histórico de Usos</h3>
+      <div id="usageList" style="max-height: 400px; overflow-y: auto;"></div>
+    </div>
+  </div>
+
+  <!-- ABA IMPRESSORAS -->
   <div id="impressoras" class="tab-content">
     <div class="filters">
       <button class="btn-primary" onclick="openPrinterModal()">+ Nova Impressora</button>
     </div>
-    <!-- Onde as impressoras cadastradas vão aparecer -->
     <div id="printerGrid" class="filament-grid"></div>
   </div>
-  
-  <!-- MODAL ADICIONAR/EDITAR IMPRESSORA -->
-<div id="printerModal" class="modal">
-  <div class="modal-content">
-    <div class="modal-title" id="printerModalTitle">Nova Impressora</div>
-    <form onsubmit="savePrinter(event)">
-      <div class="form-group">
-        <label>Nome da Impressora:</label>
-        <input type="text" id="printerNome" required placeholder="Ex: Adventurer 5X">
-      </div>
-      <div class="form-group">
-        <label>Modelo:</label>
-        <input type="text" id="printerModelo" placeholder="Ex: Flashforge">
-      </div>
-      <div class="form-group">
-        <label>Quantidade de Slots (Entradas de Filamento):</label>
-        <select id="printerSlots">
-          <option value="1">1 Slot (Padrão)</option>
-          <option value="2">2 Slots</option>
-          <option value="4">4 Slots (AMS / MMU)</option>
-        </select>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn-secondary" onclick="closePrinterModal()">Cancelar</button>
-        <button type="submit" class="btn-primary">Salvar Impressora</button>
-      </div>
-    </form>
-  </div>
-</div>
 
-      <!-- Aqui o JavaScript vai criar os campos de cada slot -->
-      <div id="usageSlotsContainer"></div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label>Data da Impressão:</label>
-          <input type="date" id="dataImpressao" required>
-        </div>
-        <div class="form-group">
-          <label>Nome da Peça (opcional):</label>
-          <input type="text" id="nomePeca" placeholder="Ex: Suporte de Celular">
-        </div>
-      </div>
-
-      <button class="btn-success" onclick="registrarUsoMultiplo()" style="width: 100%; margin-top: 20px;">
-        ✓ Confirmar e Deduzir do Estoque
-      </button>
-    </div>
-
-    <div class="calculator-form">
-      <h3>Histórico de Usos Recentes</h3>
-      <div id="usageList" style="max-height: 400px; overflow-y: auto;"></div>
-    </div>
-  </div>
-  <div id="qrcode" class="tab-content"><div class="calculator-form"><h2>QR Code</h2><p>Funcionalidade em manutenção.</p></div></div>
-  <div id="calculadora" class="tab-content"><div class="calculator-form"><h2>Calculadora</h2><p>Funcionalidade em manutenção.</p></div></div>
-  
+  <!-- OUTRAS ABAS -->
+  <div id="qrcode" class="tab-content"><div class="calculator-form"><h2>QR Code</h2><p>Em manutenção.</p></div></div>
+  <div id="calculadora" class="tab-content"><div class="calculator-form"><h2>Calculadora</h2><p>Em manutenção.</p></div></div>
   <div id="ferramentas" class="tab-content">
     <div class="calculator-form">
-      <h3>Backup e Dados</h3>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
-        <button class="btn-primary" onclick="exportJSON()">📥 Exportar JSON</button>
-        <button class="btn-secondary" onclick="importData()">📤 Importar JSON</button>
-        <button class="btn-danger" onclick="clearAllData()">🗑️ Limpar Tudo</button>
-      </div>
-      <input type="file" id="importFile" style="display:none" onchange="handleImport(event)">
+      <button class="btn-primary" onclick="exportJSON()">📥 Exportar JSON</button>
+      <button class="btn-danger" onclick="clearAllData()">🗑️ Limpar Tudo</button>
     </div>
   </div>
 </div>
 
+<!-- MODAIS -->
 <div id="addModal" class="modal">
   <div class="modal-content">
     <div class="modal-title" id="modalTitle">Novo Filamento</div>
     <form onsubmit="saveFilament(event)">
       <div class="form-row">
         <div class="form-group"><label>Cor Dominante:</label><input type="text" id="corDominante" required></div>
-        <div class="form-group"><label>Nome Modelo:</label><input type="text" id="cor" required></div>
+        <div class="form-group"><label>Modelo:</label><input type="text" id="cor" required></div>
       </div>
       <div class="form-row">
         <div class="form-group"><label>Marca:</label><input type="text" id="marca" required></div>
-        <div class="form-group"><label>Material:</label><input type="text" id="material" required placeholder="Ex: PLA, Nylon"></div>
+        <div class="form-group"><label>Material:</label><input type="text" id="material" required></div>
       </div>
       <div class="form-row">
         <div class="form-group"><label>Peso Balança (g):</label><input type="number" id="pesoBalanca" step="0.1" required onchange="autoCalcGramas()"></div>
         <div class="form-group"><label>Peso Carretel (g):</label><input type="number" id="pesoEmbalagem" step="0.1" required onchange="autoCalcGramas()"></div>
-      </div>
-      <div class="form-row">
-        <div class="form-group"><label>Preço (R$):</label><input type="number" id="precoPago" step="0.01" required></div>
-        <div class="form-group"><label>Status:</label><select id="status"><option value="em_uso">Em Uso</option><option value="lacrado">Lacrado</option><option value="usado">Usado</option></select></div>
       </div>
       <div class="form-group"><label>Peso Líquido (g):</label><input type="number" id="gramas" readonly></div>
       <div class="modal-footer">
@@ -158,8 +121,18 @@
   </div>
 </div>
 
-<div id="detailsModal" class="modal">
-  <div class="modal-content"><div class="modal-title">Detalhes</div><div id="detailsContent"></div><div class="modal-footer"><button class="btn-secondary" onclick="closeDetailsModal()">Fechar</button></div></div>
+<div id="printerModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-title" id="printerModalTitle">Nova Impressora</div>
+    <form onsubmit="savePrinter(event)">
+      <div class="form-group"><label>Nome:</label><input type="text" id="printerNome" required></div>
+      <div class="form-group"><label>Slots:</label><select id="printerSlots"><option value="1">1</option><option value="2">2</option><option value="4">4</option></select></div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="closePrinterModal()">Cancelar</button>
+        <button type="submit" class="btn-primary">Salvar</button>
+      </div>
+    </form>
+  </div>
 </div>
 
 <script src="./assets/js/data.local.js"></script>
@@ -167,5 +140,3 @@
 <script src="./assets/js/app.js"></script>
 </body>
 </html>
-
-
