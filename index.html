@@ -3,19 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gerenciador Profissional de Filamentos 3D</title>
-
+  <title>Gerenciador de Filamentos 3D</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.1.4/html5-qrcode.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-
   <link rel="stylesheet" href="./assets/css/styles.css">
 </head>
-
 <body>
 <div class="container">
   <header>
-    <h1>🎨 Gerenciador Profissional de Filamentos 3D</h1>
+    <h1>🎨 Gerenciador de Filamentos 3D</h1>
     <button class="btn-primary" onclick="openAddModal()">+ Novo Filamento</button>
   </header>
 
@@ -23,367 +19,76 @@
     <button class="nav-tab active" onclick="switchTab('estoque', this)">📦 Estoque</button>
     <button class="nav-tab" onclick="switchTab('adicionar-uso', this)">➖ Registrar Uso</button>
     <button class="nav-tab" onclick="switchTab('qrcode', this)">📱 QR Code</button>
-    <button class="nav-tab" onclick="switchTab('calculadora', this)">💰 Calculadora de Preço</button>
-    <button class="nav-tab" onclick="switchTab('impressoras', this)">🖨️ Impressoras</button>
+    <button class="nav-tab" onclick="switchTab('calculadora', this)">💰 Calculadora</button>
     <button class="nav-tab" onclick="switchTab('ferramentas', this)">🛠️ Ferramentas</button>
   </div>
 
-  <!-- ABA ESTOQUE -->
   <div id="estoque" class="tab-content active">
     <div class="filters">
-      <input type="text" id="searchInput" placeholder="Buscar por cor, marca..." onkeyup="filterFilaments()">
-      <select id="brandFilter" onchange="filterFilaments()">
-		<option value="">Todas as marcas</option>
-	  </select>
-	  <select id="colorFilter" onchange="filterFilaments()">
-        <option value="">Todas as cores</option>
-      </select>
+      <input type="text" id="searchInput" placeholder="Buscar..." onkeyup="filterFilaments()">
+      <select id="brandFilter" onchange="filterFilaments()"><option value="">Todas as marcas</option></select>
+      <select id="colorFilter" onchange="filterFilaments()"><option value="">Todas as cores</option></select>
+      <select id="materialFilter" onchange="filterFilaments()"><option value="">Todos os materiais</option></select>
       <select id="statusFilter" onchange="filterFilaments()">
         <option value="">Todos os status</option>
         <option value="em_uso">Em Uso</option>
         <option value="lacrado">Lacrado</option>
         <option value="usado">Usado</option>
       </select>
-      <select id="materialFilter" onchange="filterFilaments()">
-        <option value="">Todos os materiais</option>
-        <option value="PLA">PLA</option>
-        <option value="PETG">PETG</option>
-        <option value="ABS">ABS</option>
-        <option value="TPU">TPU</option>
-      </select>
     </div>
-
     <div class="stats-grid" id="statsGrid"></div>
-
     <div class="content-grid">
       <div class="filament-grid" id="filamentGrid"></div>
       <div class="sidebar">
         <div class="sidebar-card">
           <h3>Filtros Rápidos</h3>
           <div class="quick-filters">
-			<select id="brandQuickFilter" onchange="filterByBrand(this.value)" style="width: 100%;">
-			<option value="">Filtrar por marca...</option>
-			</select>
-            <button class="quick-filter-btn" onclick="filterByStatus('em_uso')">📦 Em Uso</button>
-            <button class="quick-filter-btn" onclick="filterByStatus('lacrado')">🔒 Lacrado</button>
+            <select id="brandQuickFilter" onchange="filterByBrand(this.value)" style="width: 100%; margin-bottom: 10px;"></select>
             <button class="quick-filter-btn" onclick="showLowStock()">⚠️ Baixo Estoque</button>
-            <button class="quick-filter-btn" onclick="exportJSON()">📥 Exportar JSON</button>
-            <button class="quick-filter-btn" onclick="exportCSV()">📊 Exportar CSV</button>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ABA REGISTRAR USO -->
-  <div id="adicionar-uso" class="tab-content">
-    <div class="calculator-form">
-      <h2>Registrar Consumo de Filamento</h2>
-      <p style="color: var(--gray); margin-bottom: 20px; font-size: 0.95em;">
-        Selecione a impressora e registre o consumo estimado pelo slicer para cada slot utilizado.
-      </p>
-
-      <div class="form-group">
-        <label>Selecione a Impressora:</label>
-        <select id="printerSelectUso" onchange="updateUsageSlots()" required>
-          <option value="">-- Selecione uma impressora --</option>
-        </select>
-      </div>
-
-      <div id="usageSlotsContainer"></div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label>Data da Impressão:</label>
-          <input type="date" id="dataImpressao" required>
-        </div>
-        <div class="form-group">
-          <label>Nome da Peça (opcional):</label>
-          <input type="text" id="nomePeca" placeholder="Ex: Suporte para celular">
-        </div>
-      </div>
-
-      <button class="btn-success" onclick="registrarUsoMultiplo()" style="width: 100%; margin-top: 20px;">
-        ✓ Registrar Uso nos Slots
-      </button>
-    </div>
-
-    <div class="calculator-form">
-      <h3>Histórico Recente de Usos</h3>
-      <div id="usageList" style="max-height: 400px; overflow-y: auto;"></div>
-    </div>
-  </div>
-
-  <!-- ABA QR CODE -->
-  <div id="qrcode" class="tab-content">
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px;">
-      <div>
-        <div class="qr-scanner-container">
-          <h3>🔍 Scanner QR Code</h3>
-          <p style="color: var(--gray); margin-bottom: 15px; font-size: 0.9em;">Escaneie um código para localizar o filamento</p>
-          <div id="scanner"></div>
-          <button class="btn-primary" style="width: 100%; margin-top: 15px;" onclick="startScanning()">Iniciar Scanner</button>
-          <button class="btn-secondary" style="width: 100%; margin-top: 8px;" onclick="stopScanning()">Parar Scanner</button>
-          <div id="scanResult" style="margin-top: 15px; padding: 15px; background: var(--light); border-radius: 8px; display: none;"></div>
-        </div>
-      </div>
-
-      <div>
-        <div class="qr-scanner-container">
-          <h3>📱 Gerar QR Code</h3>
-          <div class="form-group">
-            <label>Selecione o Filamento:</label>
-            <select id="filamentSelectQR" onchange="generateQR()">
-              <option value="">-- Selecione um filamento --</option>
-            </select>
-          </div>
-          <div id="qrOutput" style="display: none; text-align: center; margin-top: 20px;">
-            <div id="qrcode-generator"></div>
-            <button class="btn-primary" style="width: 100%; margin-top: 15px;" onclick="printQRCode()">🖨️ Imprimir Etiqueta</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <!-- ABA CALCULADORA -->
-  <div id="calculadora" class="tab-content">
-    <div class="calculator-form">
-      <h2>💰 Calculadora de Precificação</h2>
-      <p style="color: var(--gray); margin-bottom: 20px;">Calcule o preço final de uma peça com base nos custos reais</p>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label>Custo do Filamento Usado (R$):</label>
-          <input type="number" id="calcCustoMaterial" placeholder="0.00" step="0.01" onchange="calcularPreco()">
-        </div>
-        <div class="form-group">
-          <label>Peso de Filamento (g):</label>
-          <input type="number" id="calcPesoFilamento" placeholder="0" step="0.1" onchange="calcularPreco()">
-        </div>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label>Tempo de Impressão (horas):</label>
-          <input type="number" id="calcTempoHoras" placeholder="0" step="0.1" onchange="calcularPreco()">
-        </div>
-        <div class="form-group">
-          <label>Custo da Energia por hora (R$):</label>
-          <input type="number" id="calcCustoEnergia" placeholder="0.50" step="0.01" value="0.50" onchange="calcularPreco()">
-        </div>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label>Custo da Mão de Obra por hora (R$):</label>
-          <input type="number" id="calcCustoMaoObra" placeholder="50.00" step="0.01" value="50.00" onchange="calcularPreco()">
-        </div>
-        <div class="form-group">
-          <label>Margem de Lucro (%):</label>
-          <input type="number" id="calcMargemLucro" placeholder="40" step="1" value="40" onchange="calcularPreco()">
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label>Descrição da Peça:</label>
-        <textarea id="calcDescricao" placeholder="Ex: Miniatura decorativa com 2 cores..."></textarea>
-      </div>
-
-      <div id="calculoResultado" style="display: none;">
-        <div style="background: var(--light); padding: 20px; border-radius: 8px; margin-top: 20px;">
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
-            <div>
-              <p style="color: var(--gray); font-size: 0.9em;">Custo Material</p>
-              <p style="font-size: 1.5em; font-weight: bold; color: var(--primary);" id="resultado-material">R$ 0,00</p>
-            </div>
-            <div>
-              <p style="color: var(--gray); font-size: 0.9em;">Custo Energia</p>
-              <p style="font-size: 1.5em; font-weight: bold; color: var(--primary);" id="resultado-energia">R$ 0,00</p>
-            </div>
-            <div>
-              <p style="color: var(--gray); font-size: 0.9em;">Custo M.O.</p>
-              <p style="font-size: 1.5em; font-weight: bold; color: var(--primary);" id="resultado-mao">R$ 0,00</p>
-            </div>
-            <div>
-              <p style="color: var(--gray); font-size: 0.9em;">Subtotal</p>
-              <p style="font-size: 1.5em; font-weight: bold; color: var(--primary);" id="resultado-subtotal">R$ 0,00</p>
-            </div>
-          </div>
-          <div class="calculator-result">
-            <div class="result-label">PREÇO FINAL RECOMENDADO</div>
-            <div class="result-value" id="resultado-preco">R$ 0,00</div>
-            <div class="result-label" style="margin-top: 10px;" id="resultado-lucro">Lucro: R$ 0,00</div>
-          </div>
-          <button class="btn-primary" style="width: 100%; margin-top: 15px;" onclick="copiarPreco()">📋 Copiar Preço</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ABA IMPRESSORAS -->
-  <div id="impressoras" class="tab-content">
-    <div class="filters">
-      <button class="btn-primary" onclick="openPrinterModal()">+ Nova Impressora</button>
-    </div>
-    <div id="printerGrid" class="filament-grid"></div>
-  </div>
-
-  <!-- ABA FERRAMENTAS -->
+  <div id="adicionar-uso" class="tab-content"><div class="calculator-form"><h2>Registro de Uso</h2><p>Funcionalidade em manutenção.</p></div></div>
+  <div id="qrcode" class="tab-content"><div class="calculator-form"><h2>QR Code</h2><p>Funcionalidade em manutenção.</p></div></div>
+  <div id="calculadora" class="tab-content"><div class="calculator-form"><h2>Calculadora</h2><p>Funcionalidade em manutenção.</p></div></div>
+  
   <div id="ferramentas" class="tab-content">
     <div class="calculator-form">
-      <h3>Ferramentas e Utilitários</h3>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-        <button class="btn-primary" onclick="exportJSON()">📥 Exportar Dados (JSON)</button>
-        <button class="btn-primary" onclick="exportCSV()">📊 Exportar Dados (CSV)</button>
-        <button class="btn-secondary" onclick="importData()">📤 Importar Dados</button>
+      <h3>Backup e Dados</h3>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
+        <button class="btn-primary" onclick="exportJSON()">📥 Exportar JSON</button>
+        <button class="btn-secondary" onclick="importData()">📤 Importar JSON</button>
         <button class="btn-danger" onclick="clearAllData()">🗑️ Limpar Tudo</button>
       </div>
-      <input type="file" id="importFile" accept=".json" style="display: none;" onchange="handleImport(event)">
-    </div>
-
-    <div class="calculator-form">
-      <h3>Informações Técnicas</h3>
-      <p style="color: var(--gray); line-height: 1.8;">
-        <strong>Fórmula de Cálculo de Comprimento:</strong><br>
-        Comprimento (m) = Peso (g) / (π × (Diâmetro/2)² × Densidade)<br><br>
-
-        <strong>Densidades Padrão:</strong><br>
-        • PLA: 1.24 g/cm³<br>
-        • PETG: 1.27 g/cm³<br>
-        • ABS: 1.04 g/cm³<br>
-        • TPU: 1.22 g/cm³<br>
-        • Nylon: 1.08 g/cm³<br><br>
-
-        <strong>Cálculo de Preço:</strong><br>
-        Preço Final = (Custo Total × Margem) + Custo Total<br>
-        Custo Total = Material + Energia + Mão de Obra
-      </p>
+      <input type="file" id="importFile" style="display:none" onchange="handleImport(event)">
     </div>
   </div>
 </div>
-<!-- MODAL ADICIONAR/EDITAR FILAMENTO -->
+
 <div id="addModal" class="modal">
   <div class="modal-content">
     <div class="modal-title" id="modalTitle">Novo Filamento</div>
     <form onsubmit="saveFilament(event)">
       <div class="form-row">
-        <div class="form-group">
-          <label>Cor Dominante:</label>
-          <input type="text" id="corDominante" required>
-        </div>
-        <div class="form-group">
-          <label>Nome/Modelo:</label>
-          <input type="text" id="cor" required>
-        </div>
+        <div class="form-group"><label>Cor Dominante:</label><input type="text" id="corDominante" required></div>
+        <div class="form-group"><label>Nome Modelo:</label><input type="text" id="cor" required></div>
       </div>
-
       <div class="form-row">
-        <div class="form-group">
-          <label>Marca:</label>
-          <input type="text" id="marca" required>
-        </div>
-        <div class="form-group">
-          <label>Fornecedor:</label>
-          <input type="text" id="fornecedor">
-        </div>
+        <div class="form-group"><label>Marca:</label><input type="text" id="marca" required></div>
+        <div class="form-group"><label>Material:</label><input type="text" id="material" required placeholder="Ex: PLA, Nylon"></div>
       </div>
-
       <div class="form-row">
-        <div class="form-group">
-          <label>Preço Pago (R$):</label>
-          <input type="number" id="precoPago" step="0.01" required>
-        </div>
-        <div class="form-group">
-          <label>Material:</label>
-          <select id="material" required>
-            <option value="">Selecione</option>
-            <option value="PLA">PLA</option>
-            <option value="PETG">PETG</option>
-            <option value="ABS">ABS</option>
-            <option value="TPU">TPU</option>
-            <option value="Nylon">Nylon</option>
-          </select>
-        </div>
+        <div class="form-group"><label>Peso Balança (g):</label><input type="number" id="pesoBalanca" step="0.1" required onchange="autoCalcGramas()"></div>
+        <div class="form-group"><label>Peso Carretel (g):</label><input type="number" id="pesoEmbalagem" step="0.1" required onchange="autoCalcGramas()"></div>
       </div>
-
       <div class="form-row">
-        <div class="form-group">
-          <label>Diâmetro:</label>
-          <select id="diametro" required>
-            <option value="1.75">1,75 MM</option>
-            <option value="2.85">2,85 MM</option>
-            <option value="3">3 MM</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Densidade (g/cm³):</label>
-          <input type="number" id="densidade" step="0.01" required>
-        </div>
+        <div class="form-group"><label>Preço (R$):</label><input type="number" id="precoPago" step="0.01" required></div>
+        <div class="form-group"><label>Status:</label><select id="status"><option value="em_uso">Em Uso</option><option value="lacrado">Lacrado</option><option value="usado">Usado</option></select></div>
       </div>
-
-      <div class="auto-calc-box">
-        ℹ️ Os campos abaixo são calculados automaticamente. Digite um valor para substituir o cálculo automático.
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label>Peso de Filamento (g):</label>
-          <input type="number" id="gramas" placeholder="Auto" step="0.1" onchange="updateMetros()">
-          <small style="color: var(--gray); margin-top: 5px; display: block;">Subtrair Embalagem = Balança - Embalagem</small>
-        </div>
-        <div class="form-group">
-          <label>Peso Balança (g):</label>
-          <input type="number" id="pesoBalanca" step="0.1" required onchange="autoCalcGramas()">
-        </div>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label>Peso Embalagem (g):</label>
-          <input type="number" id="pesoEmbalagem" step="0.1" required onchange="autoCalcGramas()">
-        </div>
-        <div class="form-group">
-          <label>Comprimento de Filamento (m):</label>
-          <input type="number" id="metros" placeholder="Auto" step="0.01" readonly>
-          <small style="color: var(--gray); margin-top: 5px; display: block;">Calculado automaticamente</small>
-        </div>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label>Local de Armazenamento:</label>
-          <select id="localizacao" required>
-            <option value="">Selecione</option>
-            <option value="Prateleira A1">Prateleira A1</option>
-            <option value="Prateleira A2">Prateleira A2</option>
-            <option value="Prateleira B1">Prateleira B1</option>
-            <option value="Prateleira B2">Prateleira B2</option>
-            <option value="Armário C">Armário C</option>
-            <option value="Gaveta D">Gaveta D</option>
-            <option value="Caixa Armazenagem">Caixa Armazenagem</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Status:</label>
-          <select id="status" required>
-            <option value="em_uso">Em Uso</option>
-            <option value="lacrado">Lacrado</option>
-            <option value="usado">Usado</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label>Foto do Filamento:</label>
-        <input type="file" id="fotoBlobInput" accept="image/*">
-        <small style="color: var(--gray); margin-top: 5px; display: block;">Faça upload de uma foto do carretel</small>
-      </div>
-
-      <div class="form-group">
-        <label>Comentários:</label>
-        <textarea id="comentarios"></textarea>
-      </div>
-
+      <div class="form-group"><label>Peso Líquido (g):</label><input type="number" id="gramas" readonly></div>
       <div class="modal-footer">
         <button type="button" class="btn-secondary" onclick="closeAddModal()">Cancelar</button>
         <button type="submit" class="btn-primary">Salvar</button>
@@ -392,53 +97,12 @@
   </div>
 </div>
 
-<!-- MODAL ADICIONAR/EDITAR IMPRESSORA -->
-<div id="printerModal" class="modal">
-  <div class="modal-content">
-    <div class="modal-title" id="printerModalTitle">Nova Impressora</div>
-    <form onsubmit="savePrinter(event)">
-      <div class="form-group">
-        <label>Nome da Impressora:</label>
-        <input type="text" id="printerNome" required placeholder="Ex: Ender 3 S1">
-      </div>
-      <div class="form-group">
-        <label>Modelo:</label>
-        <input type="text" id="printerModelo" placeholder="Ex: Creality">
-      </div>
-      <div class="form-group">
-        <label>Quantidade de Slots:</label>
-        <select id="printerSlots">
-          <option value="1">1 Slot</option>
-          <option value="2">2 Slots</option>
-          <option value="4">4 Slots (AMS/MMU)</option>
-        </select>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn-secondary" onclick="closePrinterModal()">Cancelar</button>
-        <button type="submit" class="btn-primary">Salvar</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<!-- MODAL DETALHES -->
 <div id="detailsModal" class="modal">
-  <div class="modal-content">
-    <div class="modal-title">Detalhes do Filamento</div>
-    <div id="detailsContent"></div>
-    <div class="modal-footer">
-      <button class="btn-secondary" onclick="closeDetailsModal()">Fechar</button>
-      <button class="btn-primary" onclick="editCurrentFilament()" style="flex: 1;">Editar</button>
-      <button class="btn-danger" onclick="deleteCurrentFilament()" style="flex: 1;">Deletar</button>
-    </div>
-  </div>
+  <div class="modal-content"><div class="modal-title">Detalhes</div><div id="detailsContent"></div><div class="modal-footer"><button class="btn-secondary" onclick="closeDetailsModal()">Fechar</button></div></div>
 </div>
-<!-- Fonte de dados (JSON agora / Supabase depois) -->
-<script src="./assets/js/data.local.js"></script>
-<script src="./assets/js/data.supabase.js"></script>
-<script src="./assets/js/data.source.js"></script>
 
-<!-- Seu app -->
+<script src="./assets/js/data.local.js"></script>
+<script src="./assets/js/data.source.js"></script>
 <script src="./assets/js/app.js"></script>
 </body>
 </html>
