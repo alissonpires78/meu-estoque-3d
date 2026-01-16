@@ -27,7 +27,7 @@
   <!-- ABA ESTOQUE -->
   <div id="estoque" class="tab-content active">
     <div class="filters">
-      <input type="text" id="searchInput" placeholder="Buscar..." onkeyup="filterFilaments()">
+      <input type="text" id="searchInput" placeholder="Buscar por nome ou marca..." onkeyup="filterFilaments()">
       <select id="brandFilter" onchange="filterFilaments()"><option value="">Todas as marcas</option></select>
       <select id="colorFilter" onchange="filterFilaments()"><option value="">Todas as cores</option></select>
       <select id="materialFilter" onchange="filterFilaments()"><option value="">Todos os materiais</option></select>
@@ -56,35 +56,32 @@
   <!-- ABA REGISTRAR USO -->
   <div id="adicionar-uso" class="tab-content">
     <div class="calculator-form">
-      <h2>Registrar Consumo de Filamento</h2>
+      <h2>Registrar Consumo</h2>
       <div class="form-group">
         <label>Selecione a Impressora:</label>
         <select id="printerSelectUso" onchange="updateUsageSlots()" required>
-          <option value="">-- Selecione uma impressora --</option>
+          <option value="">-- Selecione --</option>
         </select>
       </div>
       <div id="usageSlotsContainer"></div>
       <div class="form-row">
         <div class="form-group"><label>Data:</label><input type="date" id="dataImpressao"></div>
-        <div class="form-group"><label>Peça:</label><input type="text" id="nomePeca" placeholder="Nome da peça"></div>
+        <div class="form-group"><label>Nome da Peça:</label><input type="text" id="nomePeca" placeholder="Opcional"></div>
       </div>
-      <button class="btn-success" onclick="registrarUsoMultiplo()" style="width: 100%; margin-top: 20px;">✓ Confirmar e Deduzir</button>
+      <button class="btn-success" onclick="registrarUsoMultiplo()" style="width: 100%; margin-top: 20px;">✓ Confirmar Uso</button>
     </div>
     <div class="calculator-form">
-      <h3>Histórico de Usos</h3>
-      <div id="usageList" style="max-height: 400px; overflow-y: auto;"></div>
+      <h3>Histórico</h3>
+      <div id="usageList" style="max-height: 300px; overflow-y: auto;"></div>
     </div>
   </div>
 
   <!-- ABA IMPRESSORAS -->
   <div id="impressoras" class="tab-content">
-    <div class="filters">
-      <button class="btn-primary" onclick="openPrinterModal()">+ Nova Impressora</button>
-    </div>
+    <div class="filters"><button class="btn-primary" onclick="openPrinterModal()">+ Nova Impressora</button></div>
     <div id="printerGrid" class="filament-grid"></div>
   </div>
 
-  <!-- OUTRAS ABAS -->
   <div id="qrcode" class="tab-content"><div class="calculator-form"><h2>QR Code</h2><p>Em manutenção.</p></div></div>
   <div id="calculadora" class="tab-content"><div class="calculator-form"><h2>Calculadora</h2><p>Em manutenção.</p></div></div>
   <div id="ferramentas" class="tab-content">
@@ -95,14 +92,14 @@
   </div>
 </div>
 
-<!-- MODAIS -->
+<!-- MODAL FILAMENTO -->
 <div id="addModal" class="modal">
   <div class="modal-content">
     <div class="modal-title" id="modalTitle">Novo Filamento</div>
     <form onsubmit="saveFilament(event)">
       <div class="form-row">
         <div class="form-group"><label>Cor Dominante:</label><input type="text" id="corDominante" required></div>
-        <div class="form-group"><label>Modelo:</label><input type="text" id="cor" required></div>
+        <div class="form-group"><label>Nome Modelo:</label><input type="text" id="cor" required></div>
       </div>
       <div class="form-row">
         <div class="form-group"><label>Marca:</label><input type="text" id="marca" required></div>
@@ -121,16 +118,14 @@
   </div>
 </div>
 
+<!-- MODAL IMPRESSORA -->
 <div id="printerModal" class="modal">
   <div class="modal-content">
-    <div class="modal-title" id="printerModalTitle">Nova Impressora</div>
+    <div class="modal-title">Nova Impressora</div>
     <form onsubmit="savePrinter(event)">
       <div class="form-group"><label>Nome:</label><input type="text" id="printerNome" required></div>
       <div class="form-group"><label>Slots:</label><select id="printerSlots"><option value="1">1</option><option value="2">2</option><option value="4">4</option></select></div>
-      <div class="modal-footer">
-        <button type="button" class="btn-secondary" onclick="closePrinterModal()">Cancelar</button>
-        <button type="submit" class="btn-primary">Salvar</button>
-      </div>
+      <div class="modal-footer"><button type="button" class="btn-secondary" onclick="closePrinterModal()">Cancelar</button><button type="submit" class="btn-primary">Salvar</button></div>
     </form>
   </div>
 </div>
