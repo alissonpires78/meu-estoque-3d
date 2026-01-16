@@ -51,7 +51,45 @@
     </div>
   </div>
 
-  <div id="adicionar-uso" class="tab-content"><div class="calculator-form"><h2>Registro de Uso</h2><p>Funcionalidade em manutenção.</p></div></div>
+<!-- ABA REGISTRAR USO (Atualizada) -->
+  <div id="adicionar-uso" class="tab-content">
+    <div class="calculator-form">
+      <h2>Registrar Consumo de Filamento</h2>
+      <p style="color: var(--gray); margin-bottom: 20px; font-size: 0.95em;">
+        Selecione a impressora e registre o peso consumido em cada slot.
+      </p>
+
+      <div class="form-group">
+        <label>Selecione a Impressora:</label>
+        <select id="printerSelectUso" onchange="updateUsageSlots()" required>
+          <option value="">-- Selecione uma impressora --</option>
+        </select>
+      </div>
+
+      <!-- Aqui o JavaScript vai criar os campos de cada slot -->
+      <div id="usageSlotsContainer"></div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Data da Impressão:</label>
+          <input type="date" id="dataImpressao" required>
+        </div>
+        <div class="form-group">
+          <label>Nome da Peça (opcional):</label>
+          <input type="text" id="nomePeca" placeholder="Ex: Suporte de Celular">
+        </div>
+      </div>
+
+      <button class="btn-success" onclick="registrarUsoMultiplo()" style="width: 100%; margin-top: 20px;">
+        ✓ Confirmar e Deduzir do Estoque
+      </button>
+    </div>
+
+    <div class="calculator-form">
+      <h3>Histórico de Usos Recentes</h3>
+      <div id="usageList" style="max-height: 400px; overflow-y: auto;"></div>
+    </div>
+  </div>
   <div id="qrcode" class="tab-content"><div class="calculator-form"><h2>QR Code</h2><p>Funcionalidade em manutenção.</p></div></div>
   <div id="calculadora" class="tab-content"><div class="calculator-form"><h2>Calculadora</h2><p>Funcionalidade em manutenção.</p></div></div>
   
@@ -106,3 +144,4 @@
 <script src="./assets/js/app.js"></script>
 </body>
 </html>
+
