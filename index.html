@@ -51,20 +51,43 @@
     </div>
   </div>
 
-<!-- ABA REGISTRAR USO (Atualizada) -->
-  <div id="adicionar-uso" class="tab-content">
-    <div class="calculator-form">
-      <h2>Registrar Consumo de Filamento</h2>
-      <p style="color: var(--gray); margin-bottom: 20px; font-size: 0.95em;">
-        Selecione a impressora e registre o peso consumido em cada slot.
-      </p>
-
+<!-- ABA IMPRESSORAS -->
+  <div id="impressoras" class="tab-content">
+    <div class="filters">
+      <button class="btn-primary" onclick="openPrinterModal()">+ Nova Impressora</button>
+    </div>
+    <!-- Onde as impressoras cadastradas vão aparecer -->
+    <div id="printerGrid" class="filament-grid"></div>
+  </div>
+  
+  <!-- MODAL ADICIONAR/EDITAR IMPRESSORA -->
+<div id="printerModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-title" id="printerModalTitle">Nova Impressora</div>
+    <form onsubmit="savePrinter(event)">
       <div class="form-group">
-        <label>Selecione a Impressora:</label>
-        <select id="printerSelectUso" onchange="updateUsageSlots()" required>
-          <option value="">-- Selecione uma impressora --</option>
+        <label>Nome da Impressora:</label>
+        <input type="text" id="printerNome" required placeholder="Ex: Adventurer 5X">
+      </div>
+      <div class="form-group">
+        <label>Modelo:</label>
+        <input type="text" id="printerModelo" placeholder="Ex: Flashforge">
+      </div>
+      <div class="form-group">
+        <label>Quantidade de Slots (Entradas de Filamento):</label>
+        <select id="printerSlots">
+          <option value="1">1 Slot (Padrão)</option>
+          <option value="2">2 Slots</option>
+          <option value="4">4 Slots (AMS / MMU)</option>
         </select>
       </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="closePrinterModal()">Cancelar</button>
+        <button type="submit" class="btn-primary">Salvar Impressora</button>
+      </div>
+    </form>
+  </div>
+</div>
 
       <!-- Aqui o JavaScript vai criar os campos de cada slot -->
       <div id="usageSlotsContainer"></div>
@@ -144,4 +167,5 @@
 <script src="./assets/js/app.js"></script>
 </body>
 </html>
+
 
