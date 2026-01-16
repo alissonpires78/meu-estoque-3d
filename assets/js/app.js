@@ -11,23 +11,20 @@ let usageHistory = JSON.parse(localStorage.getItem('usage_history') || '[]');
 let currentEditId = null;
 
 function init() {
-  loadData();
-  setDefaultDate();
-  render();
-}
-
-function loadData() {
   const stored = localStorage.getItem('filamentos_pro');
   if (stored) {
     filaments = JSON.parse(stored);
+    filteredFilaments = [...filaments];
+    render();
   } else if (typeof loadFilamentosFromSource === 'function') {
     loadFilamentosFromSource().then(data => {
       filaments = data;
+      filteredFilaments = [...filaments];
       saveData();
       render();
     });
   }
-  filteredFilaments = [...filaments];
+  setDefaultDate();
 }
 
 function saveData() {
@@ -68,11 +65,31 @@ function populateSelects() {
   }
 }
 
+// LOGICA DE FILTROS CORRIGIDA
+function filterFilaments() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const brand = document.getElementById('brandFilter').value;
+  const color = document.getElementById('colorFilter').value;
+  const material = document.getElementById('materialFilter').value;
+  const status = document.getElementById('statusFilter').value;
+
+  filteredFilaments = filaments.filter(f => {
+    const matchSearch = !search || f.cor.toLowerCase().includes(search) || f.marca.toLowerCase().includes(search);
+    const matchBrand = !brand || f.marca === brand;
+    const matchColor = !color || f.cor_dominante.toUpperCase() === color.toUpperCase();
+    const matchMaterial = !material || f.material === material;
+    const matchStatus = !status || f.status === status;
+
+    return matchSearch && matchBrand && matchColor && matchMaterial && matchStatus;
+  });
+  renderCards();
+  renderStats();
+}
+
 function renderStats() {
   const grid = document.getElementById('statsGrid');
   if (!grid) return;
-  const totalItems = filteredFilaments.length;
-  grid.innerHTML = `<div class="stat-card"><div class="stat-label">Filamentos</div><div class="stat-value">${totalItems}</div></div>`;
+  grid.innerHTML = `<div class=\"stat-card\"><div class=\"stat-label\">Filamentos Exibidos</div><div class=\"stat-value\">${filteredFilaments.length}</div></div>`;
 }
 
 function renderCards() {
@@ -93,7 +110,7 @@ function renderCards() {
   }).join('');
 }
 
-// GESTÃO DE IMPRESSORAS
+// IMPRESSORAS
 function openPrinterModal() { document.getElementById('printerModal').classList.add('active'); }
 function closePrinterModal() { document.getElementById('printerModal').classList.remove('active'); }
 
@@ -123,7 +140,7 @@ function deletePrinter(id) {
   saveData(); render();
 }
 
-// USO E SLOTS
+// REGISTRAR USO (Melhorado com Cor + Marca)
 function updateUsageSlots() {
   const printerId = parseInt(document.getElementById('printerSelectUso').value);
   const container = document.getElementById('usageSlotsContainer');
@@ -136,11 +153,11 @@ function updateUsageSlots() {
       <div class="form-row" style="background:#f9f9f9; padding:10px; margin-bottom:5px; border-radius:8px;">
         <div class="form-group"><label>Slot ${i}:</label>
           <select class="slot-filament" data-slot="${i}">
-            <option value="">-- Selecione --</option>
-            ${filaments.map(f => `<option value="${f.id}">${f.cor}</option>`).join('')}
+            <option value="">-- Selecione Filamento --</option>
+            ${filaments.map(f => `<option value="${f.id}">${f.cor} (${f.marca})</option>`).join('')}
           </select>
         </div>
-        <div class="form-group"><label>Gasto (g):</label><input type="number" class="slot-weight" data-slot="${i}"></div>
+        <div class="form-group"><label>Gasto (g):</label><input type="number" class="slot-weight" data-slot="${i}" placeholder="0.0"></div>
       </div>`;
   }
 }
@@ -152,16 +169,18 @@ function registrarUsoMultiplo() {
   
   selects.forEach(sel => {
     const id = parseInt(sel.value);
-    const peso = parseFloat(document.querySelector(`.slot-weight[data-slot="${sel.dataset.slot}"]`).value);
+    const weightInput = document.querySelector(`.slot-weight[data-slot="${sel.dataset.slot}"]`);
+    const peso = parseFloat(weightInput.value);
     if (id && peso > 0) {
       const f = filaments.find(x => x.id === id);
       if (f) {
         f.peso_balanca -= peso;
-        usageHistory.push({ data, peca, cor: f.cor, peso });
+        usageHistory.push({ data, peca, cor: f.cor, marca: f.marca, peso });
       }
     }
   });
-  saveData(); render(); alert("Estoque atualizado!");
+  saveData(); render(); alert("Uso registrado!");
+  document.getElementById('usageSlotsContainer').innerHTML = '';
 }
 
 function renderUsageHistory() {
@@ -169,11 +188,11 @@ function renderUsageHistory() {
   if (!list) return;
   list.innerHTML = usageHistory.slice().reverse().map(u => `
     <div style="font-size:0.85em; border-bottom:1px solid #eee; padding:5px;">
-      ${u.data}: -${u.peso}g de ${u.cor} ${u.peca ? `(${u.peca})` : ''}
+      ${u.data}: -${u.peso}g de ${u.cor} (${u.marca}) ${u.peca ? `[${u.peca}]` : ''}
     </div>`).join('');
 }
 
-// FUNÇÕES BASE
+// FUNCOES DE APOIO
 function switchTab(id, btn) {
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
@@ -181,19 +200,13 @@ function switchTab(id, btn) {
   btn.classList.add('active');
 }
 
-function openAddModal() { currentEditId = null; document.getElementById('addModal').classList.add('active'); }
+function openAddModal() { currentEditId = null; document.querySelector('#addModal form').reset(); document.getElementById('addModal').classList.add('active'); }
 function closeAddModal() { document.getElementById('addModal').classList.remove('active'); }
 
 function autoCalcGramas() {
   const b = parseFloat(document.getElementById('pesoBalanca').value) || 0;
   const e = parseFloat(document.getElementById('pesoEmbalagem').value) || 0;
-  document.getElementById('gramas').value = b - e;
-}
-
-function filterFilaments() {
-  const s = document.getElementById('searchInput').value.toLowerCase();
-  filteredFilaments = filaments.filter(f => !s || f.cor.toLowerCase().includes(s) || f.marca.toLowerCase().includes(s));
-  renderCards();
+  document.getElementById('gramas').value = (b - e).toFixed(1);
 }
 
 function saveFilament(e) {
@@ -206,12 +219,13 @@ function saveFilament(e) {
     material: document.getElementById('material').value,
     peso_balanca: parseFloat(document.getElementById('pesoBalanca').value),
     peso_embalagem: parseFloat(document.getElementById('pesoEmbalagem').value),
+    status: document.getElementById('status').value || 'em_uso'
   };
   if (currentEditId) {
     const i = filaments.findIndex(x => x.id === currentEditId);
     filaments[i] = f;
   } else { filaments.push(f); }
-  saveData(); init(); closeAddModal();
+  saveData(); render(); closeAddModal();
 }
 
 function editFilament(id) {
@@ -224,9 +238,20 @@ function editFilament(id) {
   document.getElementById('pesoBalanca').value = f.peso_balanca;
   document.getElementById('pesoEmbalagem').value = f.peso_embalagem;
   autoCalcGramas();
-  openAddModal();
+  document.getElementById('addModal').classList.add('active');
 }
 
+function filterByBrand(v) { document.getElementById('brandFilter').value = v; filterFilaments(); }
+function showLowStock() {
+    filteredFilaments = filaments.filter(f => (f.peso_balanca - f.peso_embalagem) < 200);
+    renderCards();
+}
+function exportJSON() {
+    const blob = new Blob([JSON.stringify(filaments)], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'estoque.json'; a.click();
+}
+function clearAllData() { if(confirm('Apagar tudo?')) { localStorage.clear(); location.reload(); } }
 function setDefaultDate() { document.getElementById('dataImpressao').value = new Date().toISOString().split('T')[0]; }
 
 window.onload = init;
