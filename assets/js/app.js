@@ -10,6 +10,7 @@ let printers = JSON.parse(localStorage.getItem('printers_data') || '[]');
 let usageHistory = JSON.parse(localStorage.getItem('usage_history') || '[]');
 let calcHistory = JSON.parse(localStorage.getItem('calc_history') || '[]');
 let currentEditId = null;
+let currentPrinterEditId = null;
 
 function init() {
   loadData();
@@ -48,13 +49,7 @@ function render() {
 }
 
 function populateSelects() {
-  // Ordenar filamentos por cor e marca para os dropdowns
-  const sortedFilaments = [...filaments].sort((a, b) => {
-    let nomeA = `${a.cor} ${a.marca}`.toUpperCase();
-    let nomeB = `${b.cor} ${b.marca}`.toUpperCase();
-    return nomeA.localeCompare(nomeB);
-  });
-
+  const sortedFilaments = [...filaments].sort((a, b) => `${a.cor} ${a.marca}`.localeCompare(`${b.cor} ${b.marca}`));
   const brands = [...new Set(filaments.map(f => (f.marca || '').trim()).filter(Boolean))].sort();
   const materials = [...new Set(filaments.map(f => (f.material || '').trim()).filter(Boolean))].sort();
   const colors = [...new Set(filaments.map(f => (f.cor_dominante || '').toUpperCase().trim()).filter(Boolean))].sort();
@@ -71,17 +66,15 @@ function populateSelects() {
   fill('materialFilter', materials, 'Todos os materiais');
   fill('colorFilter', colors, 'Todas as cores');
 
-  // Select de Registro de Uso (Ordenado Alfabeticamente)
   const pSelect = document.getElementById('printerSelectUso');
   if (pSelect) {
     pSelect.innerHTML = '<option value="">-- Selecione uma impressora --</option>' + 
     printers.map(p => `<option value="${p.id}">${p.nome}</option>`).join('');
   }
 
-  // Select de Filamentos na Calculadora (Ordenado Alfabeticamente)
   const cSelect = document.getElementById('calcFilamento');
   if (cSelect) {
-    cSelect.innerHTML = '<option value="">-- Selecione o Filamento --</option>' + 
+    cSelect.innerHTML = '<option value="">-- Escolha o Filamento --</option>' + 
     sortedFilaments.map(f => `<option value="${f.id}">${f.cor} (${f.marca})</option>`).join('');
   }
 }
@@ -108,20 +101,31 @@ function filterFilaments() {
 function renderStats() {
   const grid = document.getElementById('statsGrid');
   if (!grid) return;
-  grid.innerHTML = `<div class="stat-card"><div class="stat-label">Filamentos Exibidos</div><div class="stat-value">${filteredFilaments.length}</div></div>`;
+  grid.innerHTML = `<div class="stat-card"><div class="stat-label">Total de Itens</div><div class="stat-value">${filteredFilaments.length}</div></div>`;
 }
 
 function renderCards() {
   const container = document.getElementById('filamentGrid');
   if (!container) return;
   container.innerHTML = filteredFilaments.map(f => {
-    const weight = (parseFloat(f.peso_balanca||0) - parseFloat(f.peso_embalagem||0));
+    const currentWeight = (parseFloat(f.peso_balanca || 0) - parseFloat(f.peso_embalagem || 0));
+    const initialWeight = parseFloat(f.gramas || currentWeight || 1);
+    const percentage = Math.max(0, Math.min(100, (currentWeight / initialWeight) * 100));
+    
+    // Cor da barra (Verde -> Amarelo -> Vermelho)
+    const hue = (percentage * 1.2).toString(10); 
+    const barColor = `hsl(${hue}, 70%, 45%)`;
+
     const color = colorMap[f.cor_dominante.toUpperCase()] || '#ccc';
     return `
       <div class="filament-card" style="border-top-color: ${color}">
         <div class="card-title"><b>${f.cor}</b></div>
         <div class="info-row"><span>Marca:</span><span>${f.marca}</span></div>
-        <div class="info-row"><span>Peso:</span><span>${weight.toFixed(0)}g</span></div>
+        <div class="info-row"><span>Restante:</span><span>${currentWeight.toFixed(0)}g</span></div>
+        <div style="height: 18px; width: 100%; background: #eee; border-radius: 9px; overflow: hidden; margin-top: 10px; position: relative;">
+          <div style="width: ${percentage}%; height: 100%; background: ${barColor}; transition: 0.3s;"></div>
+          <span style="position: absolute; width: 100%; text-align: center; font-size: 10px; font-weight: bold; top: 2px; color: ${percentage < 50 ? '#333' : '#fff'}">${percentage.toFixed(1)}%</span>
+        </div>
         <div class="card-actions">
           <button class="btn-primary btn-small" onclick="editFilament(${f.id})">Editar</button>
         </div>
@@ -130,17 +134,35 @@ function renderCards() {
 }
 
 // IMPRESSORAS
-function openPrinterModal() { document.getElementById('printerModal').classList.add('active'); }
+function openPrinterModal(id = null) {
+  currentPrinterEditId = id;
+  if (id) {
+    const p = printers.find(x => x.id === id);
+    document.getElementById('printerNome').value = p.nome;
+    document.getElementById('printerSlots').value = p.slots;
+  } else {
+    document.querySelector('#printerModal form').reset();
+  }
+  document.getElementById('printerModal').classList.add('active');
+}
 function closePrinterModal() { document.getElementById('printerModal').classList.remove('active'); }
+
 function savePrinter(e) {
   e.preventDefault();
-  printers.push({
-    id: Date.now(),
+  const data = {
+    id: currentPrinterEditId || Date.now(),
     nome: document.getElementById('printerNome').value,
     slots: parseInt(document.getElementById('printerSlots').value)
-  });
+  };
+  if (currentPrinterEditId) {
+    const idx = printers.findIndex(x => x.id === currentPrinterEditId);
+    printers[idx] = data;
+  } else {
+    printers.push(data);
+  }
   saveData(); render(); closePrinterModal();
 }
+
 function renderPrinters() {
   const container = document.getElementById('printerGrid');
   if (!container) return;
@@ -148,12 +170,14 @@ function renderPrinters() {
     <div class="filament-card" style="border-top-color: var(--primary);">
       <div class="card-title"><b>${p.nome}</b></div>
       <div class="info-row"><span>Capacidade:</span><span>${p.slots} Slot(s)</span></div>
-      <button class="btn-danger btn-small" onclick="deletePrinter(${p.id})">Remover</button>
+      <div class="card-actions">
+        <button class="btn-primary btn-small" onclick="openPrinterModal(${p.id})">Editar</button>
+        <button class="btn-danger btn-small" onclick="deletePrinter(${p.id})">Remover</button>
+      </div>
     </div>`).join('');
 }
 function deletePrinter(id) {
-  printers = printers.filter(p => p.id !== id);
-  saveData(); render();
+  if(confirm("Remover impressora?")) { printers = printers.filter(p => p.id !== id); saveData(); render(); }
 }
 
 // REGISTRAR USO
@@ -163,16 +187,13 @@ function updateUsageSlots() {
   container.innerHTML = '';
   const printer = printers.find(p => p.id === printerId);
   if (!printer) return;
-
-  // Filamentos ordenados para o registro de uso
   const sorted = [...filaments].sort((a,b) => a.cor.localeCompare(b.cor));
-
   for (let i = 1; i <= printer.slots; i++) {
     container.innerHTML += `
       <div class="form-row" style="background:#f9f9f9; padding:10px; margin-bottom:5px; border-radius:8px;">
         <div class="form-group"><label>Slot ${i}:</label>
           <select class="slot-filament" data-slot="${i}">
-            <option value="">-- Selecione Filamento --</option>
+            <option value="">-- Selecione --</option>
             ${sorted.map(f => `<option value="${f.id}">${f.cor} (${f.marca})</option>`).join('')}
           </select>
         </div>
@@ -187,8 +208,8 @@ function registrarUsoMultiplo() {
   const selects = document.querySelectorAll('.slot-filament');
   selects.forEach(sel => {
     const id = parseInt(sel.value);
-    const weightInput = document.querySelector(`.slot-weight[data-slot="${sel.dataset.slot}"]`);
-    const peso = parseFloat(weightInput.value);
+    const weightInput = document.querySelector(`.slot-weight[sel.dataset.slot="${sel.dataset.slot}"]`); // Corrigido seletor
+    const peso = parseFloat(document.querySelector(`.slot-weight[data-slot="${sel.dataset.slot}"]`).value);
     if (id && peso > 0) {
       const f = filaments.find(x => x.id === id);
       if (f) {
@@ -197,7 +218,7 @@ function registrarUsoMultiplo() {
       }
     }
   });
-  saveData(); render(); alert("Uso registrado!");
+  saveData(); render(); alert("Estoque atualizado!");
   document.getElementById('usageSlotsContainer').innerHTML = '';
 }
 
@@ -210,71 +231,63 @@ function renderUsageHistory() {
     </div>`).join('');
 }
 
-// CALCULADORA DE PRECIFICAÇÃO
+// CALCULADORA AVANÇADA
 function calcularPreco() {
   const filamentoId = parseInt(document.getElementById('calcFilamento').value);
   const peso = parseFloat(document.getElementById('calcPeso').value) || 0;
-  const tempo = parseFloat(document.getElementById('calcTempo').value) || 0;
+  const h = parseFloat(document.getElementById('calcTempoHoras').value) || 0;
+  const m = parseFloat(document.getElementById('calcTempoMinutos').value) || 0;
   const horaMaq = parseFloat(document.getElementById('calcHoraMaq').value) || 0;
+  const maoObra = parseFloat(document.getElementById('calcMaoObra').value) || 0;
+  const insumos = parseFloat(document.getElementById('calcInsumos').value) || 0;
+  const embalagem = parseFloat(document.getElementById('calcEmbalagem').value) || 0;
+  const transporte = parseFloat(document.getElementById('calcTransporte').value) || 0;
   const margem = parseFloat(document.getElementById('calcMargem').value) || 0;
+  const impostoPct = parseFloat(document.getElementById('calcImposto').value) || 0;
 
-  if (!filamentoId || peso <= 0) {
+  if (!filamentoId || (peso <= 0 && h <= 0 && m <= 0)) {
     document.getElementById('resultadoCalculo').style.display = 'none';
     return;
   }
 
   const f = filaments.find(x => x.id === filamentoId);
-  const custoFilamentoGramas = f.preco_pago / 1000; // Assume 1kg se não especificado
-  const custoMaterial = peso * custoFilamentoGramas;
-  const custoTempo = tempo * horaMaq;
+  const custoMaterial = peso * (f.preco_pago / 1000);
+  const tempoTotalHoras = h + (m / 60);
+  const custoEnergiaMaq = tempoTotalHoras * horaMaq;
   
-  const custoTotal = custoMaterial + custoTempo;
-  const precoFinal = custoTotal * (1 + margem / 100);
+  const custoBase = custoMaterial + custoEnergiaMaq + maoObra + insumos + embalagem + transporte;
+  const valorComMargem = custoBase * (1 + margem / 100);
+  const valorFinal = valorComMargem / (1 - impostoPct / 100);
 
-  document.getElementById('resTotal').textContent = `R$ ${precoFinal.toFixed(2)}`;
+  document.getElementById('resTotal').textContent = `R$ ${valorFinal.toFixed(2)}`;
   document.getElementById('resBreakdown').innerHTML = `
-    Material: R$ ${custoMaterial.toFixed(2)} | 
-    Tempo/Maq: R$ ${custoTempo.toFixed(2)} | 
-    Custo Base: R$ ${custoTotal.toFixed(2)}
+    Material: R$ ${custoMaterial.toFixed(2)}<br>
+    Energia/Maq: R$ ${custoEnergiaMaq.toFixed(2)}<br>
+    Mão de Obra + Extras: R$ ${(maoObra + insumos).toFixed(2)}<br>
+    <b>Custo de Produção: R$ ${custoBase.toFixed(2)}</b>
   `;
   document.getElementById('resultadoCalculo').style.display = 'block';
 }
 
 function salvarOrcamento() {
   const peca = document.getElementById('calcNomePeca').value;
-  const cliente = document.getElementById('calcCliente').value || "Não informado";
+  const cliente = document.getElementById('calcCliente').value || "Final";
   const valor = document.getElementById('resTotal').textContent;
-
-  if (!peca || valor === "R$ 0,00") {
-    alert("Preencha o nome da peça e faça o cálculo!");
-    return;
-  }
-
-  calcHistory.push({
-    data: new Date().toLocaleDateString(),
-    peca,
-    cliente,
-    valor
-  });
-
-  saveData();
-  renderCalcHistory();
-  alert("Orçamento salvo!");
+  if (!peca || valor === "R$ 0,00") { alert("Cálculo incompleto!"); return; }
+  calcHistory.push({ data: new Date().toLocaleDateString(), peca, cliente, valor });
+  saveData(); renderCalcHistory(); alert("Orçamento salvo!");
 }
 
 function renderCalcHistory() {
   const list = document.getElementById('calcHistory');
   if (!list) return;
-  list.innerHTML = calcHistory.slice().reverse().map((c, index) => `
+  list.innerHTML = calcHistory.slice().reverse().map(c => `
     <div style="font-size:0.85em; border-bottom:1px solid #eee; padding:8px; background: white; margin-bottom:5px; border-radius:5px;">
-      <b>${c.peca}</b> <br>
-      <span style="color: #666;">Cliente: ${c.cliente}</span><br>
-      <b style="color: var(--primary);">${c.valor}</b> 
-      <small style="float:right">${c.data}</small>
+      <b>${c.peca}</b> | ${c.cliente}<br><b style="color: var(--primary);">${c.valor}</b> <small style="float:right">${c.data}</small>
     </div>`).join('');
 }
 
-// APOIO
+// AUXILIARES
 function switchTab(id, btn) {
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
@@ -290,20 +303,23 @@ function autoCalcGramas() {
 }
 function saveFilament(e) {
   e.preventDefault();
+  const pesoB = parseFloat(document.getElementById('pesoBalanca').value);
+  const pesoE = parseFloat(document.getElementById('pesoEmbalagem').value);
   const f = {
     id: currentEditId || Date.now(),
     cor_dominante: document.getElementById('corDominante').value,
     cor: document.getElementById('cor').value,
     marca: document.getElementById('marca').value,
     material: document.getElementById('material').value,
-    peso_balanca: parseFloat(document.getElementById('pesoBalanca').value),
-    peso_embalagem: parseFloat(document.getElementById('pesoEmbalagem').value),
+    peso_balanca: pesoB,
+    peso_embalagem: pesoE,
+    gramas: pesoB - pesoE, // Salva o peso líquido inicial para a barra de progresso
     preco_pago: parseFloat(document.getElementById('precoPago').value),
-    status: 'em_uso'
+    status: document.getElementById('status').value || 'em_uso'
   };
   if (currentEditId) {
     const i = filaments.findIndex(x => x.id === currentEditId);
-    filaments[i] = f;
+    filaments[i] = {...filaments[i], ...f};
   } else { filaments.push(f); }
   saveData(); init(); closeAddModal();
 }
@@ -317,6 +333,7 @@ function editFilament(id) {
   document.getElementById('pesoBalanca').value = f.peso_balanca;
   document.getElementById('pesoEmbalagem').value = f.peso_embalagem;
   document.getElementById('precoPago').value = f.preco_pago;
+  document.getElementById('status').value = f.status;
   autoCalcGramas();
   document.getElementById('addModal').classList.add('active');
 }
@@ -328,7 +345,7 @@ function showLowStock() {
 function exportJSON() {
     const blob = new Blob([JSON.stringify({filaments, printers, usageHistory, calcHistory})], {type: 'application/json'});
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = 'estoque_completo.json'; a.click();
+    const a = document.createElement('a'); a.href = url; a.download = 'backup_3d.json'; a.click();
 }
 function clearAllData() { if(confirm('Apagar tudo?')) { localStorage.clear(); location.reload(); } }
 function setDefaultDate() { document.getElementById('dataImpressao').value = new Date().toISOString().split('T')[0]; }
