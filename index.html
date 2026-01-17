@@ -83,59 +83,50 @@
 
   <!-- ABA CALCULADORA -->
   <div id="calculadora" class="tab-content">
-    <div style="display: grid; grid-template-columns: 1fr 350px; gap: 20px;">
+    <div style="display: grid; grid-template-columns: 1fr 380px; gap: 20px;">
       <div class="calculator-form">
-        <h2>💰 Precificação de Peça</h2>
+        <h2>💰 Orçamento Detalhado</h2>
         <div class="form-row">
-          <div class="form-group">
-            <label>Peça:</label>
-            <input type="text" id="calcNomePeca" placeholder="Ex: Action Figure">
-          </div>
-          <div class="form-group">
-            <label>Cliente:</label>
-            <input type="text" id="calcCliente" placeholder="Opcional">
-          </div>
+          <div class="form-group"><label>Peça:</label><input type="text" id="calcNomePeca"></div>
+          <div class="form-group"><label>Cliente:</label><input type="text" id="calcCliente"></div>
         </div>
         <div class="form-row">
-          <div class="form-group">
-            <label>Filamento:</label>
-            <select id="calcFilamento" onchange="calcularPreco()"></select>
-          </div>
-          <div class="form-group">
-            <label>Peso da Peça (g):</label>
-            <input type="number" id="calcPeso" placeholder="0" oninput="calcularPreco()">
-          </div>
+          <div class="form-group"><label>Filamento:</label><select id="calcFilamento" onchange="calcularPreco()"></select></div>
+          <div class="form-group"><label>Peso (g):</label><input type="number" id="calcPeso" value="0" oninput="calcularPreco()"></div>
         </div>
         <div class="form-row">
-          <div class="form-group">
-            <label>Tempo de Impressão (h):</label>
-            <input type="number" id="calcTempo" placeholder="0" oninput="calcularPreco()">
-          </div>
-          <div class="form-group">
-            <label>Hora Máquina (R$):</label>
-            <input type="number" id="calcHoraMaq" value="5.00" oninput="calcularPreco()">
-          </div>
+          <div class="form-group"><label>Tempo (Horas):</label><input type="number" id="calcTempoHoras" value="0" oninput="calcularPreco()"></div>
+          <div class="form-group"><label>Tempo (Minutos):</label><input type="number" id="calcTempoMinutos" value="0" max="59" oninput="calcularPreco()"></div>
         </div>
         <div class="form-row">
-            <div class="form-group">
-              <label>Lucro Desejado (%):</label>
-              <input type="number" id="calcMargem" value="100" oninput="calcularPreco()">
-            </div>
-            <div class="form-group" style="display: flex; align-items: flex-end;">
-              <button class="btn-primary" style="width: 100%;" onclick="salvarOrcamento()">💾 Salvar Orçamento</button>
-            </div>
+          <div class="form-group"><label>Hora Máquina (R$):</label><input type="number" id="calcHoraMaq" value="5.00" step="0.50" oninput="calcularPreco()"></div>
+          <div class="form-group"><label>Mão de Obra Fixa (R$):</label><input type="number" id="calcMaoObra" value="0" step="1" oninput="calcularPreco()"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Insumos/Extras (R$):</label><input type="number" id="calcInsumos" value="0" placeholder="Leds, parafusos..." oninput="calcularPreco()"></div>
+          <div class="form-group"><label>Embalagem (R$):</label><input type="number" id="calcEmbalagem" value="0" oninput="calcularPreco()"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Frete/Transporte (R$):</label><input type="number" id="calcTransporte" value="0" oninput="calcularPreco()"></div>
+          <div class="form-group"><label>Lucro (%):</label><input type="number" id="calcMargem" value="100" oninput="calcularPreco()"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Imposto MEI/Simples (%):</label><input type="number" id="calcImposto" value="0" oninput="calcularPreco()"></div>
+          <div class="form-group" style="display: flex; align-items: flex-end;">
+            <button class="btn-primary" style="width: 100%;" onclick="salvarOrcamento()">💾 Salvar Orçamento</button>
+          </div>
         </div>
 
         <div id="resultadoCalculo" class="calculator-result" style="margin-top: 20px; display: none;">
-          <div class="result-label">VALOR SUGERIDO</div>
+          <div class="result-label">PREÇO DE VENDA</div>
           <div class="result-value" id="resTotal">R$ 0,00</div>
-          <div id="resBreakdown" style="font-size: 0.8em; opacity: 0.9;"></div>
+          <div id="resBreakdown" style="font-size: 0.85em; text-align: left; margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.3); padding-top: 10px;"></div>
         </div>
       </div>
 
       <div class="sidebar-card">
-        <h3>Últimos Orçamentos</h3>
-        <div id="calcHistory" style="max-height: 500px; overflow-y: auto;"></div>
+        <h3>Histórico de Orçamentos</h3>
+        <div id="calcHistory" style="max-height: 600px; overflow-y: auto;"></div>
       </div>
     </div>
   </div>
@@ -143,7 +134,7 @@
   <!-- ABA FERRAMENTAS -->
   <div id="ferramentas" class="tab-content">
     <div class="calculator-form">
-      <button class="btn-primary" onclick="exportJSON()">📥 Exportar JSON</button>
+      <button class="btn-primary" onclick="exportJSON()">📥 Exportar Backup Completo</button>
       <button class="btn-danger" onclick="clearAllData()">🗑️ Limpar Tudo</button>
     </div>
   </div>
@@ -155,8 +146,8 @@
     <div class="modal-title" id="modalTitle">Novo Filamento</div>
     <form onsubmit="saveFilament(event)">
       <div class="form-row">
-        <div class="form-group"><label>Cor Dominante:</label><input type="text" id="corDominante" required></div>
-        <div class="form-group"><label>Modelo:</label><input type="text" id="cor" required></div>
+        <div class="form-group"><label>Cor Dominante:</label><input type="text" id="corDominante" required placeholder="Ex: PRETO"></div>
+        <div class="form-group"><label>Modelo:</label><input type="text" id="cor" required placeholder="Ex: PLA Speed"></div>
       </div>
       <div class="form-row">
         <div class="form-group"><label>Marca:</label><input type="text" id="marca" required></div>
@@ -164,14 +155,14 @@
       </div>
       <div class="form-row">
         <div class="form-group"><label>Peso Balança (g):</label><input type="number" id="pesoBalanca" step="0.1" required onchange="autoCalcGramas()"></div>
-        <div class="form-group"><label>Peso Carretel (g):</label><input type="number" id="pesoEmbalagem" step="0.1" required onchange="autoCalcGramas()"></div>
+        <div class="form-group"><label>Peso Carretel Vazio (g):</label><input type="number" id="pesoEmbalagem" step="0.1" required onchange="autoCalcGramas()"></div>
       </div>
-      <div class="form-group"><label>Preço Pago (R$):</label><input type="number" id="precoPago" step="0.01" required></div>
-      <div class="form-group"><label>Peso Líquido (g):</label><input type="number" id="gramas" readonly></div>
-      <div class="modal-footer">
-        <button type="button" class="btn-secondary" onclick="closeAddModal()">Cancelar</button>
-        <button type="submit" class="btn-primary">Salvar</button>
+      <div class="form-row">
+        <div class="form-group"><label>Preço Pago (R$):</label><input type="number" id="precoPago" step="0.01" required></div>
+        <div class="form-group"><label>Status:</label><select id="status"><option value="em_uso">Em Uso</option><option value="lacrado">Lacrado</option><option value="usado">Usado</option></select></div>
       </div>
+      <div class="form-group"><label>Peso Líquido Inicial (g):</label><input type="number" id="gramas" readonly></div>
+      <div class="modal-footer"><button type="button" class="btn-secondary" onclick="closeAddModal()">Cancelar</button><button type="submit" class="btn-primary">Salvar</button></div>
     </form>
   </div>
 </div>
@@ -179,7 +170,7 @@
 <!-- MODAL IMPRESSORA -->
 <div id="printerModal" class="modal">
   <div class="modal-content">
-    <div class="modal-title">Nova Impressora</div>
+    <div class="modal-title" id="printerModalTitle">Impressora</div>
     <form onsubmit="savePrinter(event)">
       <div class="form-group"><label>Nome:</label><input type="text" id="printerNome" required></div>
       <div class="form-group"><label>Slots:</label><select id="printerSlots"><option value="1">1</option><option value="2">2</option><option value="4">4</option></select></div>
