@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="description" content="Sistema de gerenciamento para impressão 3D FDM" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="PrintManager 3D" />
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="./manifest.json" />
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link rel="apple-touch-icon" href="/icon-192x192.png" />
+    
+    <!-- Preconnect -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    <title>PrintManager 3D</title>
+    
+    <style>
+      /* Critical CSS for loading state */
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #0f172a;
+        font-family: system-ui, -apple-system, sans-serif;
+      }
+      #root {
+        min-height: 100vh;
+      }
+      .loading-screen {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      }
+      .loading-spinner {
+        width: 48px;
+        height: 48px;
+        border: 3px solid #334155;
+        border-top-color: #6366f1;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+    </style>
+    <script type="module" crossorigin src="./assets/index-CO4xKqc3.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-DSJbRdbP.css">
+    <script>
+      // Abre a página de impressão de etiqueta com dados do filamento (chamado pelo app ou por interceptação de clique)
+      window.openEtiquetaFilamento = function(filament) {
+        if (!filament || !filament.qrCode) return;
+        var q = [];
+        q.push('qr=' + encodeURIComponent(filament.qrCode));
+        if (filament.name) q.push('name=' + encodeURIComponent(filament.name));
+        if (filament.color) q.push('color=' + encodeURIComponent(filament.color));
+        if (filament.material) q.push('material=' + encodeURIComponent(filament.material));
+        if (filament.weightRemaining != null) q.push('weightRemaining=' + encodeURIComponent(String(filament.weightRemaining)));
+        if (filament.weightTotal != null) q.push('weightTotal=' + encodeURIComponent(String(filament.weightTotal)));
+        var base = location.origin + (location.pathname.replace(/\/[^/]*$/, '') || '');
+        if (base && !base.endsWith('/')) base += '/';
+        window.open((base || '.') + 'etiqueta.html?' + q.join('&'), '_blank', 'noopener');
+      };
+      // Interceptar clique em "Imprimir Etiqueta" ou "Etiqueta" ANTES do React (para evitar o alert) e abrir a página de etiqueta
+      document.addEventListener('click', function(ev) {
+        var target = ev.target;
+        while (target && target !== document.body) {
+          var text = (target.textContent || '').trim();
+          var isImprimirEtiqueta = text.toLowerCase() === 'imprimir etiqueta';
+          var isEtiquetaBtn = (text === 'Etiqueta' || text === 'etiqueta') && target.closest && target.closest('[role="dialog"]');
+          if (isImprimirEtiqueta || isEtiquetaBtn) {
+            ev.preventDefault();
+            ev.stopPropagation();
+            ev.stopImmediatePropagation();
+            var filament = {};
+            var docText = document.body ? document.body.innerText || '' : '';
+            var qrMatch = docText.match(/QR\s*Code\s*:\s*([A-Za-z0-9\-_]+)/i);
+            if (qrMatch) filament.qrCode = qrMatch[1].trim();
+            if (isEtiquetaBtn && target.closest('[role="dialog"]')) {
+              var dialog = target.closest('[role="dialog"]');
+              var dialogText = dialog.innerText || '';
+              if (!filament.qrCode) { var m = dialogText.match(/QR\s*Code\s*:\s*([A-Za-z0-9\-_]+)/i); if (m) filament.qrCode = m[1].trim(); }
+              var titleEl = dialog.querySelector('h2, h3, [class*="title"], [class*="Title"]');
+              if (titleEl) filament.name = (titleEl.textContent || '').trim();
+              var pesoRest = dialogText.match(/Peso\s*Restante\s*:\s*(\d+)/i);
+              if (pesoRest) filament.weightRemaining = pesoRest[1];
+              var pesoTotal = dialogText.match(/Peso\s*Total\s*:\s*(\d+)/i);
+              if (pesoTotal) filament.weightTotal = pesoTotal[1];
+              var materialMatch = dialogText.match(/Material\s*:\s*([^\n]+)/i);
+              if (materialMatch) filament.material = materialMatch[1].trim();
+            }
+            if (!filament.qrCode) {
+              var card = target.closest ? (target.closest('[class*="card"]') || target.closest('article') || target.closest('[class*="Card"]')) : null;
+              if (card) {
+                var firstLine = (card.textContent || '').split('\n').map(function(s) { return s.trim(); }).filter(Boolean)[0];
+                if (firstLine) filament.name = firstLine;
+              }
+            }
+            if (filament.qrCode || filament.name) {
+              if (!filament.qrCode) filament.qrCode = filament.name || 'SEM-QR';
+              window.openEtiquetaFilamento(filament);
+            }
+            return;
+          }
+          target = target.parentElement;
+        }
+      }, true);
+    </script>
+  </head>
+  <body>
+    <div id="root">
+      <div class="loading-screen">
+        <div class="loading-spinner"></div>
+      </div>
+    </div>
+  </body>
+</html>
